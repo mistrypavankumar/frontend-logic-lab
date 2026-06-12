@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { allChallenges, challengeTopics, allMethods } from "@/data";
 import ChallengeCard from "@/components/ChallengeCard";
 import ProgressBar from "@/components/ProgressBar";
@@ -12,6 +12,18 @@ export default function PracticePage() {
   const [filter, setFilter] = useState<FilterValue>(EMPTY_FILTER);
 
   const patch = (p: Partial<FilterValue>) => setFilter((f) => ({ ...f, ...p }));
+
+  // Honor ?method=… / ?topic=… deep links (e.g. from Review mode) once on mount.
+  // Read from location (not useSearchParams) so the page stays statically rendered.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const method = params.get("method");
+    const topic = params.get("topic");
+    const next: Partial<FilterValue> = {};
+    if (method && allMethods.includes(method)) next.method = method;
+    if (topic && challengeTopics.includes(topic)) next.topic = topic;
+    if (Object.keys(next).length > 0) setFilter((f) => ({ ...f, ...next }));
+  }, []);
 
   const filtered = useMemo(() => {
     const q = filter.query.toLowerCase();

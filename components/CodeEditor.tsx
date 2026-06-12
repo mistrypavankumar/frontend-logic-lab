@@ -54,11 +54,13 @@ export default function CodeEditor({
         ref={taRef}
         value={value}
         spellCheck={false}
+        wrap="off"
+        aria-label="Code editor"
         onChange={(e) => onChange(e.target.value)}
         onScroll={syncScroll}
         onKeyDown={handleKeyDown}
         rows={Math.min(Math.max(lineCount, 6), 20)}
-        className="w-full resize-y bg-transparent py-3 pr-3 text-slate-100 caret-brand-500 outline-none"
+        className="w-full resize-none overflow-x-auto whitespace-pre bg-transparent py-3 pr-3 text-slate-100 caret-brand-500 outline-none"
         style={{ lineHeight: "1.6rem" }}
       />
     </div>

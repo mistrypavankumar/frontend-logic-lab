@@ -41,6 +41,216 @@ export const challenges: Challenge[] = [
         expected: [],
       },
     ],
+    hiddenTests: [
+      {
+        name: "does not mutate the input",
+        kind: "mutation",
+        call: `(()=>{const a=[{name:"R",category:"shoes"}];filterByCategory(a,"bags");return a.length;})()`,
+        expected: 1,
+      },
+      {
+        name: "empty input array",
+        kind: "empty",
+        call: `filterByCategory([], "shoes")`,
+        expected: [],
+      },
+    ],
+    relatedMethods: ["filter"],
+    reviewTags: ["filter", "immutability", "predicate"],
+    relatedChallengeSlugs: ["search-users-by-name", "sort-orders-by-price"],
+    frontendScenario:
+      "A shop page with category tabs (Shoes / Bags / Hats). Clicking a tab filters the product grid. This is the exact logic behind every 'filter by …' control you'll build.",
+    mentalModel:
+      "Imagine walking down a shelf checking each product one by one. If its category matches the one you want, drop a COPY into a new basket. The original shelf is never touched.",
+    eli5:
+      "You have a box of toys. You want only the red ones. You look at each toy: red? put it in a new box. Not red? leave it. At the end, the new box has just the red toys — and the old box is exactly as it was.",
+    inputOutputThinking: {
+      input: "A list of product objects (each has a `category`) and a category string to match.",
+      output: "A NEW list containing only the products whose category equals the wanted one.",
+      transformation: "Keep each product where product.category === category.",
+      rules: [
+        "Match with === (exact category)",
+        "Return a new array — never mutate the input",
+        "Order of kept items stays the same",
+      ],
+      edgeCases: [
+        "No matches → []",
+        "Empty input → []",
+        "Category that doesn't exist → []",
+      ],
+    },
+    pseudocode: {
+      understand: "Pick only the products in one category, without changing the original list.",
+      input: "products: object[], category: string",
+      output: "object[] (a new, filtered array)",
+      steps: [
+        "Make a new empty result list.",
+        "Look at each product in turn.",
+        "If the product's category equals the wanted category, add it to the result.",
+        "After checking all products, return the result.",
+      ],
+      toCode: `function filterByCategory(products, category) {
+  return products.filter((p) => p.category === category);
+}`,
+    },
+    fadedExample: {
+      intro: "Fill in the two key pieces, then write the whole function yourself below.",
+      code: `function filterByCategory(products, category) {
+  return products.{{1}}((p) => p.category {{2}} category);
+}`,
+      blanks: [
+        { id: "1", answer: "filter", hint: "The array method that KEEPS items where the test is true." },
+        { id: "2", answer: "===", hint: "Compare exactly — strict equality (three characters)." },
+      ],
+    },
+    predictOutput: [
+      {
+        prompt: "What does this log?",
+        code: `const items = [{c:"a"},{c:"b"},{c:"a"}];
+console.log(items.filter((x) => x.c === "a").length);`,
+        kind: "multiple-choice",
+        choices: ["1", "2", "3", "0"],
+        answer: "2",
+        explanation:
+          "filter keeps every item whose test is true. Two items have c === 'a', so the new array has length 2. The original array is unchanged.",
+        distractorExplanations: {
+          "3": "That's the length of the original array. filter doesn't return everything — it returns a NEW array of only the items that passed the test.",
+          "1": "filter doesn't stop at the first match (that's find). It keeps every item where the test is true — and two items match here.",
+          "0": "The test does match some items, so the result isn't empty. 0 would be right only if no item had c === 'a'.",
+        },
+      },
+    ],
+    builtInSolution: {
+      language: "js",
+      code: `products.filter((p) => p.category === category)`,
+    },
+    manualSolution: {
+      language: "js",
+      code: `const out = [];
+for (const p of products) {
+  if (p.category === category) out.push(p);
+}
+return out;`,
+    },
+    internalImplementation: {
+      language: "js",
+      code: `function filterByCategory(products, category) {
+  const out = [];
+  for (let i = 0; i < products.length; i++) {
+    if (products[i].category === category) out.push(products[i]);
+  }
+  return out;
+}`,
+    },
+    methodComparison: {
+      builtIn: { language: "js", code: `products.filter((p) => p.category === category)` },
+      manual: {
+        language: "js",
+        code: `const out = [];
+for (const p of products)
+  if (p.category === category) out.push(p);
+return out;`,
+      },
+      internal: {
+        language: "js",
+        code: `// filter, conceptually:
+Array.prototype.myFilter = function (test) {
+  const out = [];
+  for (let i = 0; i < this.length; i++)
+    if (test(this[i], i, this)) out.push(this[i]);
+  return out;
+};`,
+      },
+      whenToUse: [
+        "Use the built-in `filter` by default — clear, immutable, and well understood.",
+        "Use a manual loop when you must `break` early, or in a hot path where you want to avoid a callback per item.",
+        "Know the internal version for interviews and for understanding why filter returns a NEW array.",
+      ],
+    },
+    multipleSolutions: [
+      {
+        approach: "Beginner",
+        language: "js",
+        code: `function filterByCategory(products, category) {
+  const result = [];
+  for (let i = 0; i < products.length; i++) {
+    if (products[i].category === category) {
+      result.push(products[i]);
+    }
+  }
+  return result;
+}`,
+        explanation: "An explicit loop — easiest to read and to step through in your head.",
+        tradeoffs: "Most verbose, but the clearest for a beginner and easy to debug.",
+      },
+      {
+        approach: "Built-in",
+        language: "js",
+        code: `const filterByCategory = (products, category) =>
+  products.filter((p) => p.category === category);`,
+        explanation: "Idiomatic. filter expresses intent (‘keep these’) directly.",
+        tradeoffs: "Cleanest and immutable. Can't break early, and allocates a new array.",
+      },
+      {
+        approach: "Optimized",
+        language: "js",
+        code: `// Filtering the same list by many categories repeatedly?
+// Pre-group once, then look up in O(1).
+function groupByCategory(products) {
+  const map = new Map();
+  for (const p of products) {
+    const list = map.get(p.category) ?? [];
+    list.push(p);
+    map.set(p.category, list);
+  }
+  return map;
+}
+// const byCat = groupByCategory(products);
+// byCat.get("shoes") ?? []`,
+        explanation:
+          "If you filter the same data by category over and over (e.g. tab switches), grouping once turns each later lookup into O(1).",
+        tradeoffs: "Extra memory + setup cost. Only worth it for repeated lookups, not a one-off filter.",
+      },
+    ],
+    dryRun: [
+      { label: "Setup", code: `products = [{name:"Runner",category:"shoes"},{name:"Tote",category:"bags"}], category = "shoes"`, detail: "We start filter with an empty result and walk each product." },
+      { label: "Item 1 — Runner", code: `"shoes" === "shoes"`, detail: "true → keep Runner. Result is now [Runner]." },
+      { label: "Item 2 — Tote", code: `"bags" === "shoes"`, detail: "false → skip Tote. Result stays [Runner]." },
+      { label: "Return", code: `return [{name:"Runner",category:"shoes"}]`, detail: "All items checked. filter returns the new array; the original list is untouched." },
+    ],
+    variableTrace: {
+      columns: ["Step", "Current item", "category match?", "Result so far", "Explanation"],
+      rows: [
+        ["1", "Runner (shoes)", "true", "[Runner]", "Matches 'shoes' → kept"],
+        ["2", "Tote (bags)", "false", "[Runner]", "Doesn't match → skipped"],
+        ["end", "—", "—", "[Runner]", "Return the new array"],
+      ],
+    },
+    progressiveHints: [
+      { level: 1, label: "Understand the goal", text: "Return only the products in one category." },
+      { level: 2, label: "Think input/output", text: "Array of products + a category → a smaller array of products." },
+      { level: 3, label: "Think method", text: "You want to KEEP some items — that's exactly what filter does." },
+      { level: 4, label: "Think edge cases", text: "What if nothing matches? You should still return [] (not null)." },
+      { level: 5, label: "Almost there", text: "products.filter((p) => p.category === category)." },
+    ],
+    edgeCases: [
+      "No products match → returns []",
+      "Empty input array → returns []",
+      "Original array is never mutated",
+      "Case matters: 'Shoes' !== 'shoes'",
+    ],
+    commonMistakes: [
+      "Using == or assignment (=) instead of === in the condition.",
+      "Mutating the input with splice/push on the original instead of returning filter's new array.",
+      "Returning null/undefined instead of [] when nothing matches.",
+      "Forgetting filter is case-sensitive on the category string.",
+    ],
+    timeComplexity: "O(n)",
+    spaceComplexity: "O(n)",
+    industrialNotes: [
+      "In React, derive the filtered list during render (or useMemo) — don't copy it into state, or it drifts out of sync.",
+      "For very large lists filtered repeatedly, group once (see the Optimized approach) instead of re-scanning every keystroke.",
+    ],
   },
   {
     id: "c2",

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { TestCase } from "@/lib/types";
 import { runChallenge, RunResult } from "@/lib/runner";
 import CodeEditor from "./CodeEditor";
+import LiveTrace from "./LiveTrace";
 
 // The interactive code box used by both challenges and lessons.
 // - With tests: runs the learner's code and grades each case.
@@ -15,12 +16,15 @@ export default function ChallengeWorkspace({
   runnable: runnableProp,
   notRunnableHint = "This is a React component — build & run it in your own project.",
   onAllPassed,
+  onResult,
 }: {
   starterCode: string;
   tests?: TestCase[];
   runnable?: boolean;
   notRunnableHint?: string;
   onAllPassed?: () => void;
+  /** Fired after every graded run with whether all tests passed. */
+  onResult?: (allPassed: boolean) => void;
 }) {
   const [code, setCode] = useState(starterCode);
   const [result, setResult] = useState<RunResult | null>(null);
@@ -37,6 +41,7 @@ export default function ChallengeWorkspace({
       setResult(r);
       const allPassed =
         hasTests && r.cases.length > 0 && r.cases.every((c) => c.passed) && !r.fatalError;
+      if (hasTests) onResult?.(allPassed);
       if (allPassed) onAllPassed?.();
     } finally {
       setRunning(false);
@@ -150,6 +155,21 @@ export default function ChallengeWorkspace({
                   ? result.logs.join("\n")
                   : "(nothing logged yet — use console.log to print)"}
               </pre>
+            </div>
+          )}
+
+          {/* Live execution trace — built from the learner's own run */}
+          {!result.fatalError && result.trace.length > 0 && (
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <p className="text-sm font-semibold text-slate-800">
+                👣 Execution trace <span className="font-normal text-slate-400">(your code, step by step)</span>
+              </p>
+              <p className="mb-2 text-xs text-slate-500">
+                Loops are traced automatically. Add{" "}
+                <code className="rounded bg-slate-100 px-1 font-mono">trace(&quot;label&quot;, {"{ value }"})</code>{" "}
+                anywhere in your code to log your own values.
+              </p>
+              <LiveTrace steps={result.trace} />
             </div>
           )}
         </div>

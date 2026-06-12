@@ -1,47 +1,44 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import {
   ProgressState,
   BookmarkKind,
+  ChallengeScore,
+  SrsEntry,
   emptyProgress,
-  readProgress,
-  writeProgress,
   toggleId,
   pushRecent,
   refKey,
   bumpStreak,
   todayKey,
+  mergeScore,
+  scheduleReview,
 } from "./progress";
+import {
+  subscribe,
+  getSnapshot,
+  getServerSnapshot,
+  dispatch,
+} from "./progressStore";
 
 /**
- * Central progress hook. Reads localStorage on mount, persists every change,
- * and stays in sync across tabs via the `storage` event.
+ * Central progress hook. Backed by a single tab-wide store
+ * (lib/progressStore.ts), so every component that calls useProgress() shares
+ * the same state and re-renders together on any change. Cross-tab sync happens
+ * via the `storage` event inside the store.
  *
- * `loaded` guards against hydration mismatch: render neutral (empty) state on
- * the server / first paint, then flip to the stored values.
+ * `loaded` guards against hydration mismatch: the server / first paint render
+ * the neutral empty snapshot, then we flip to the stored values.
  */
 export function useProgress() {
-  const [state, setState] = useState<ProgressState>(emptyProgress);
-  const [loaded, setLoaded] = useState(false);
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  // True once we're past SSR / first paint (client snapshot != server snapshot).
+  const loaded = state !== getServerSnapshot();
 
-  useEffect(() => {
-    setState(readProgress());
-    setLoaded(true);
-    const onStorage = () => setState(readProgress());
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
-  // Single update helper: apply a change, persist, and return the next state.
+  // Single update helper: apply a change, persist, and notify subscribers.
   const update = useCallback(
-    (fn: (prev: ProgressState) => ProgressState) => {
-      setState((prev) => {
-        const next = fn(prev);
-        writeProgress(next);
-        return next;
-      });
-    },
+    (fn: (prev: ProgressState) => ProgressState) => dispatch(fn),
     []
   );
 
@@ -95,7 +92,61 @@ export function useProgress() {
 
   const reset = useCallback(() => update(() => emptyProgress()), [update]);
 
+  // Record Logic Score signals for a challenge (signals only flip on).
+  const recordScore = useCallback(
+    (id: string, patch: ChallengeScore) =>
+      update((p) => ({
+        ...p,
+        scores: { ...p.scores, [id]: mergeScore(p.scores[id], patch) },
+      })),
+    [update]
+  );
+
+  // Remember that the learner revealed a challenge's solution.
+  const markSolutionViewed = useCallback(
+    (id: string) =>
+      update((p) =>
+        p.viewedSolutions.includes(id)
+          ? p
+          : { ...p, viewedSolutions: [...p.viewedSolutions, id] }
+      ),
+    [update]
+  );
+
+  // Record a review outcome → reschedule the challenge (spaced repetition).
+  const recordReview = useCallback(
+    (id: string, outcome: { passed: boolean; confidence?: number }) =>
+      update((p) => ({
+        ...p,
+        srs: { ...p.srs, [id]: scheduleReview(p.srs[id], outcome, todayKey()) },
+      })),
+    [update]
+  );
+
+  // Save the learner's own "why does this work?" explanation.
+  const saveExplanation = useCallback(
+    (id: string, text: string) =>
+      update((p) => ({ ...p, explanations: { ...p.explanations, [id]: text } })),
+    [update]
+  );
+
   // --- read selectors ---
+  const scoreFor = useCallback(
+    (id: string): ChallengeScore => state.scores[id] ?? {},
+    [state.scores]
+  );
+  const isSolutionViewed = useCallback(
+    (id: string) => state.viewedSolutions.includes(id),
+    [state.viewedSolutions]
+  );
+  const srsFor = useCallback(
+    (id: string): SrsEntry | undefined => state.srs[id],
+    [state.srs]
+  );
+  const explanationFor = useCallback(
+    (id: string): string => state.explanations[id] ?? "",
+    [state.explanations]
+  );
   const isLessonDone = useCallback(
     (id: string) => state.completedLessons.includes(id),
     [state.completedLessons]
@@ -124,11 +175,19 @@ export function useProgress() {
     toggleBookmark,
     toggleRevision,
     recordLessonView,
+    recordScore,
+    markSolutionViewed,
+    recordReview,
+    saveExplanation,
     reset,
     // selectors
     isLessonDone,
     isChallengeDone,
     isBookmarked,
     isInRevision,
+    scoreFor,
+    isSolutionViewed,
+    srsFor,
+    explanationFor,
   };
 }

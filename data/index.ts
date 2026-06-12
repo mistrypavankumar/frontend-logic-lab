@@ -19,6 +19,7 @@ import { objectChallenges } from "./challenges.objects";
 import { stringChallenges } from "./challenges.strings";
 import { asyncChallenges } from "./challenges.async";
 import { industrialChallenges } from "./challenges.industrial";
+import { debugChallenges } from "./challenges.debug";
 
 export const allLessons: Lesson[] = [
   ...coreLessons,
@@ -36,11 +37,13 @@ export const allChallenges: Challenge[] = [
   ...stringChallenges,
   ...asyncChallenges,
   ...industrialChallenges,
+  ...debugChallenges,
 ];
 
 // --- ordered / filtered views ---
 export const orderedLessons = [...allLessons].sort((a, b) => a.order - b.order);
 export const modernMethodLessons = orderedLessons.filter((l) => l.isModernMethod);
+export const debugChallengeList = allChallenges.filter((c) => c.isDebugChallenge);
 export const internalsLessonList = orderedLessons.filter(
   (l) => l.category === "JavaScript Internals"
 );
@@ -49,14 +52,8 @@ export const internalsLessonList = orderedLessons.filter(
 export function getLesson(slug: string): Lesson | undefined {
   return allLessons.find((l) => l.slug === slug);
 }
-export function getLessonById(id: string): Lesson | undefined {
-  return allLessons.find((l) => l.id === id);
-}
 export function getChallenge(slug: string): Challenge | undefined {
   return allChallenges.find((c) => c.slug === slug);
-}
-export function getChallengeById(id: string): Challenge | undefined {
-  return allChallenges.find((c) => c.id === id);
 }
 
 // --- derived filter options ---

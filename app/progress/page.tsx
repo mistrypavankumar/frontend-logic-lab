@@ -5,7 +5,9 @@ import { orderedLessons, allChallenges } from "@/data";
 import ProgressBar from "@/components/ProgressBar";
 import StreakWidget from "@/components/StreakWidget";
 import RecentlyViewed from "@/components/RecentlyViewed";
+import ConceptMastery from "@/components/ConceptMastery";
 import { useProgress } from "@/lib/useProgress";
+import { totalLogicScore, isDue, todayKey } from "@/lib/progress";
 
 export default function ProgressPage() {
   const { state, loaded, isLessonDone, isChallengeDone, reset } = useProgress();
@@ -14,6 +16,13 @@ export default function ProgressPage() {
   const challengesDone = loaded ? state.completedChallenges.length : 0;
   const bookmarkCount = loaded ? state.bookmarks.length : 0;
   const revisionCount = loaded ? state.revision.length : 0;
+  const logicScore = loaded ? totalLogicScore(state.scores) : 0;
+  const solvedClean = loaded
+    ? Object.values(state.scores).filter((s) => s.solvedWithoutSolution).length
+    : 0;
+  const dueCount = loaded
+    ? Object.values(state.srs).filter((e) => isDue(e, todayKey())).length
+    : 0;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
@@ -44,10 +53,40 @@ export default function ProgressPage() {
         <StatCard label="Overall" value={lessonsDone + challengesDone} total={orderedLessons.length + allChallenges.length} />
       </div>
 
+      {/* Logic Score — rewards HOW you solved, not just that you did. */}
+      <div className="mb-10 flex flex-wrap items-center gap-6 rounded-xl border border-brand-200 bg-brand-50 p-6">
+        <div>
+          <div className="text-3xl font-extrabold text-brand-600">🏅 {logicScore}</div>
+          <div className="text-sm text-slate-500">Total Logic Score</div>
+        </div>
+        <div className="text-sm text-slate-600">
+          <p>
+            <span className="font-semibold text-slate-800">{solvedClean}</span> solved without
+            looking at the solution.
+          </p>
+          <p className="mt-1 text-slate-500">
+            Earn points by predicting output, passing edge cases, and solving from scratch.
+          </p>
+        </div>
+        <Link
+          href="/revision"
+          className="ml-auto rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+        >
+          {dueCount > 0 ? `Review ${dueCount} due →` : "Review weak spots →"}
+        </Link>
+      </div>
+
       <div className="mb-10 space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <ProgressBar value={lessonsDone} total={orderedLessons.length} label="Lessons" />
         <ProgressBar value={challengesDone} total={allChallenges.length} label="Challenges" />
       </div>
+
+      {loaded && (
+        <ConceptMastery
+          completedChallenges={state.completedChallenges}
+          scores={state.scores}
+        />
+      )}
 
       <div className="mb-10">
         <RecentlyViewed />

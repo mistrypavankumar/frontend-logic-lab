@@ -44,7 +44,7 @@ export default function MethodCompareCard({
 
       <div className="grid gap-3 md:grid-cols-2">
         {builtIn && (
-          <div>
+          <div className="min-w-0">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-green-700">
               ✅ Built-in
             </p>
@@ -52,7 +52,7 @@ export default function MethodCompareCard({
           </div>
         )}
         {manual && (
-          <div>
+          <div className="min-w-0">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
               ✋ Manual
             </p>

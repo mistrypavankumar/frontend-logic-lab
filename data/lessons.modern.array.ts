@@ -46,6 +46,82 @@ const sorted = nums.toSorted((a, b) => a - b);
     },
     explanation:
       "Copy, then sort the copy — the original array is never touched, which is exactly what toSorted does internally.",
+    mentalModel:
+      "Picture photocopying a stack of papers, then shuffling the COPY into order. The original stack stays exactly as it was — that's the difference between toSorted (copy) and sort (in place).",
+    eli5:
+      "sort() rearranges your actual toys on the shelf. toSorted() takes a photo, arranges toys in the photo, and hands you the photo — your real shelf is untouched.",
+    methodComparison: {
+      builtIn: { language: "js", code: `const sorted = nums.toSorted((a, b) => a - b);` },
+      manual: { language: "js", code: `const sorted = [...nums].sort((a, b) => a - b);` },
+      internal: {
+        language: "js",
+        code: `function myToSorted(arr, cmp) {
+  const copy = arr.slice(); // copy first
+  copy.sort(cmp);           // sort the copy in place
+  return copy;              // original never touched
+}`,
+      },
+      whenToUse: [
+        "Use toSorted when you have it (modern runtimes) and want clean, immutable code.",
+        "Use [...arr].sort(cmp) as the everywhere-supported equivalent.",
+        "Use in-place sort() only when you own the array and the extra copy genuinely costs too much.",
+      ],
+    },
+    fadedExample: {
+      intro: "Fill the gaps in myToSorted, then try writing it from scratch below.",
+      code: `function myToSorted(arr, cmp) {
+  const copy = arr.{{1}}();
+  copy.{{2}}(cmp);
+  return {{3}};
+}`,
+      blanks: [
+        { id: "1", answer: "slice", hint: "Make an independent copy of the array first." },
+        { id: "2", answer: "sort", hint: "Reorder the COPY in place." },
+        { id: "3", answer: "copy", hint: "Return the sorted copy — not arr." },
+      ],
+    },
+    predictOutput: [
+      {
+        prompt: "What is logged?",
+        code: `const nums = [3, 1, 2];
+const sorted = nums.toSorted((a, b) => a - b);
+console.log(nums, sorted);`,
+        kind: "multiple-choice",
+        choices: [
+          "[3,1,2] [1,2,3]",
+          "[1,2,3] [1,2,3]",
+          "[1,2,3] [3,1,2]",
+          "[3,1,2] [3,1,2]",
+        ],
+        answer: "[3,1,2] [1,2,3]",
+        explanation:
+          "toSorted returns a NEW sorted array, so `sorted` is [1,2,3]. It does not mutate, so `nums` is still [3,1,2]. That's the whole point of toSorted vs sort.",
+        distractorExplanations: {
+          "[1,2,3] [1,2,3]": "This is what you'd get from sort() — it mutates in place, so both would be sorted. toSorted leaves the original alone.",
+          "[1,2,3] [3,1,2]": "You've got them swapped. `nums` is the original (untouched → [3,1,2]) and `sorted` is the new sorted copy ([1,2,3]).",
+          "[3,1,2] [3,1,2]": "toSorted does return a sorted result — `sorted` isn't a plain copy, it's sorted ascending.",
+        },
+      },
+    ],
+    dryRun: [
+      { label: "Copy", code: `const copy = arr.slice(); // [3,1,2]`, detail: "First we copy the input so we never touch the original." },
+      { label: "Sort the copy", code: `copy.sort((a,b)=>a-b)`, detail: "sort compares pairs: a-b<0 means a comes first. It rearranges the COPY in place." },
+      { label: "Result", code: `copy // [1,2,3]`, detail: "The copy is now ascending." },
+      { label: "Return", code: `return copy`, detail: "We return the sorted copy. arr is still [3,1,2]." },
+    ],
+    variableTrace: {
+      columns: ["Step", "copy", "arr (original)", "Explanation"],
+      rows: [
+        ["after slice()", "[3,1,2]", "[3,1,2]", "Independent copy made"],
+        ["after sort()", "[1,2,3]", "[3,1,2]", "Only the copy is reordered"],
+        ["return", "[1,2,3]", "[3,1,2]", "Original stayed immutable"],
+      ],
+    },
+    commonMistakes: [
+      "Omitting the numeric comparator — `[10,9].toSorted()` gives [10,9] (lexicographic!).",
+      "Assuming toSorted mutates like sort (it doesn't).",
+      "Calling .sort() directly on state in React, mutating it and causing stale renders.",
+    ],
     deepDive: {
       problemSolved:
         "sort() mutates in place, a classic React bug when you sort an array held in state directly (you mutate state and the UI doesn't update predictably).",

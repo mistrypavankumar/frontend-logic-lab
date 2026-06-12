@@ -38,7 +38,10 @@ export default function Tabs({
             <button
               key={t.id}
               role="tab"
+              id={`tab-${t.id}`}
+              aria-controls={`panel-${t.id}`}
               aria-selected={isActive}
+              tabIndex={isActive ? 0 : -1}
               onClick={() => setActive(t.id)}
               className={
                 "whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition " +
@@ -57,7 +60,12 @@ export default function Tabs({
           );
         })}
       </div>
-      <div role="tabpanel" className="pt-4">
+      <div
+        role="tabpanel"
+        id={`panel-${current.id}`}
+        aria-labelledby={`tab-${current.id}`}
+        className="pt-4"
+      >
         {current.content}
       </div>
     </div>

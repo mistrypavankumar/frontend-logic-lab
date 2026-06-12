@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { Eli5Provider } from "@/components/Eli5";
 
 export const metadata: Metadata = {
   title: "Frontend Logic Lab — Learn frontend by solving problems",
@@ -17,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <Eli5Provider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </Eli5Provider>
       </body>
     </html>
   );

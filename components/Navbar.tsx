@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { Eli5Toggle } from "./Eli5";
 
 // Primary links (always visible on desktop) + secondary links (in a "More"
 // dropdown on desktop). Mobile shows everything in the hamburger menu.
@@ -56,6 +57,8 @@ export default function Navbar() {
             <button
               onClick={() => setMoreOpen((o) => !o)}
               onMouseEnter={() => setMoreOpen(true)}
+              aria-haspopup="true"
+              aria-expanded={moreOpen}
               className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
             >
               More ▾
@@ -78,6 +81,10 @@ export default function Navbar() {
               </div>
             )}
           </div>
+
+          <div className="ml-1 border-l border-slate-200 pl-2">
+            <Eli5Toggle />
+          </div>
         </div>
 
         {/* Mobile toggle */}
@@ -85,6 +92,7 @@ export default function Navbar() {
           className="rounded-md p-2 text-slate-600 hover:bg-slate-100 md:hidden"
           onClick={() => setOpen((o) => !o)}
           aria-label="Toggle menu"
+          aria-expanded={open}
         >
           {open ? "✕" : "☰"}
         </button>
@@ -105,6 +113,9 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+          <div className="px-3 py-2">
+            <Eli5Toggle />
+          </div>
         </div>
       )}
     </header>

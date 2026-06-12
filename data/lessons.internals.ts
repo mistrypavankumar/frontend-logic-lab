@@ -25,6 +25,52 @@ Promise.resolve().then(() => console.log('3')); // microtask
 console.log('2');
 // Order: 1, 2, 3, 4`,
     },
+    visualization: {
+      language: "ts",
+      code: `console.log('1');
+setTimeout(() => console.log('4'), 0);
+Promise.resolve().then(() => console.log('3'));
+console.log('2');`,
+      lanes: ["Call stack", "Microtasks", "Macrotasks (timers)", "Console"],
+      frames: [
+        {
+          line: 1,
+          note: "Run the synchronous line. console.log('1') executes immediately.",
+          lanes: { "Call stack": ["console.log('1')"], Microtasks: [], "Macrotasks (timers)": [], Console: ["1"] },
+        },
+        {
+          line: 2,
+          note: "setTimeout doesn't run now — it hands its callback to the timer queue (a macrotask) and returns.",
+          lanes: { "Call stack": ["setTimeout(…)"], Microtasks: [], "Macrotasks (timers)": ["() => log '4'"], Console: ["1"] },
+        },
+        {
+          line: 3,
+          note: "Promise.then schedules its callback on the microtask queue. Still nothing logged.",
+          lanes: { "Call stack": [".then(…)"], Microtasks: ["() => log '3'"], "Macrotasks (timers)": ["() => log '4'"], Console: ["1"] },
+        },
+        {
+          line: 4,
+          note: "Run the next synchronous line. console.log('2') executes immediately.",
+          lanes: { "Call stack": ["console.log('2')"], Microtasks: ["() => log '3'"], "Macrotasks (timers)": ["() => log '4'"], Console: ["1", "2"] },
+        },
+        {
+          note: "Synchronous code is done and the call stack is empty. The event loop now drains ALL microtasks before touching any macrotask.",
+          lanes: { "Call stack": [], Microtasks: ["() => log '3'"], "Macrotasks (timers)": ["() => log '4'"], Console: ["1", "2"] },
+        },
+        {
+          note: "Microtask runs: console.log('3'). The microtask queue is now empty.",
+          lanes: { "Call stack": ["() => log '3'"], Microtasks: [], "Macrotasks (timers)": ["() => log '4'"], Console: ["1", "2", "3"] },
+        },
+        {
+          note: "Microtasks are empty, so the loop takes ONE macrotask: the timer callback runs, logging '4'.",
+          lanes: { "Call stack": ["() => log '4'"], Microtasks: [], "Macrotasks (timers)": [], Console: ["1", "2", "3", "4"] },
+        },
+        {
+          note: "Done. Final order: 1, 2, 3, 4 — the Promise (microtask) always beats setTimeout(0) (macrotask), even though both are 'async'.",
+          lanes: { "Call stack": [], Microtasks: [], "Macrotasks (timers)": [], Console: ["1", "2", "3", "4"] },
+        },
+      ],
+    },
     practiceTask:
       "Predict the console order, then explain WHY the Promise logs before the setTimeout even though both are 'async'.",
     practiceStarter: `// Predict the output order in comments:
@@ -79,6 +125,52 @@ console.log('B');
 }
 const next = makeCounter();
 next(); next(); // 1, 2`,
+    },
+    visualization: {
+      language: "ts",
+      code: `function makeCounter() {
+  let count = 0;
+  return () => ++count;
+}
+const next = makeCounter();
+next(); next();`,
+      lanes: ["Call stack", "Closure scope", "Output"],
+      frames: [
+        {
+          line: 5,
+          note: "Call makeCounter(). A new call frame is pushed onto the stack.",
+          lanes: { "Call stack": ["makeCounter()"], "Closure scope": [], Output: [] },
+        },
+        {
+          line: 2,
+          note: "Inside makeCounter, a private variable `count` is created and set to 0.",
+          lanes: { "Call stack": ["makeCounter()"], "Closure scope": ["count: 0"], Output: [] },
+        },
+        {
+          line: 3,
+          note: "makeCounter returns an arrow function. That arrow 'closes over' count — it keeps a live link to it.",
+          lanes: { "Call stack": ["makeCounter()"], "Closure scope": ["count: 0"], Output: [] },
+        },
+        {
+          line: 5,
+          note: "makeCounter's frame pops off the stack — but `count` is NOT garbage-collected, because the returned function (now `next`) still references it.",
+          lanes: { "Call stack": [], "Closure scope": ["count: 0 (kept alive by next)"], Output: [] },
+        },
+        {
+          line: 6,
+          note: "First next() call: the arrow runs, ++count makes count 1, and returns 1.",
+          lanes: { "Call stack": ["next() ⇒ ++count"], "Closure scope": ["count: 1"], Output: ["1"] },
+        },
+        {
+          line: 6,
+          note: "Second next() call: the SAME closed-over count persists, so ++count makes it 2.",
+          lanes: { "Call stack": ["next() ⇒ ++count"], "Closure scope": ["count: 2"], Output: ["1", "2"] },
+        },
+        {
+          note: "That's a closure: count lives on between calls, private and shared only with the function that closed over it. It's how functions keep state without globals.",
+          lanes: { "Call stack": [], "Closure scope": ["count: 2"], Output: ["1", "2"] },
+        },
+      ],
     },
     practiceTask:
       "Implement makeCounter() returning a function that increments and returns a private count each call.",
@@ -151,6 +243,38 @@ user.greet();           // "Hi Ana"
 const g = user.greet;
 g();                    // this is undefined → error/NaN`,
     },
+    visualization: {
+      language: "ts",
+      code: `const user = {
+  name: 'Ana',
+  greet() { return 'Hi ' + this.name; },
+};
+user.greet();
+const g = user.greet;
+g();`,
+      lanes: ["Call", "this →", "Result"],
+      frames: [
+        {
+          line: 5,
+          note: "Called as a method — there's an object to the LEFT of the dot. That object (user) becomes `this`, so this.name is 'Ana'.",
+          lanes: { Call: ["user.greet()"], "this →": ["user"], Result: ["'Hi Ana'"] },
+        },
+        {
+          line: 6,
+          note: "Here we grab the function ALONE into a plain variable. Nothing is called yet — but the link to `user` is gone.",
+          lanes: { Call: ["const g = user.greet"], "this →": ["— (detached from user)"], Result: [] },
+        },
+        {
+          line: 7,
+          note: "A bare call g() has nothing to the left of a dot, so `this` is undefined (strict mode). this.name then throws. Same function, different call site → different `this`.",
+          lanes: { Call: ["g()"], "this →": ["undefined"], Result: ["TypeError: can't read 'name' of undefined"] },
+        },
+        {
+          note: "`this` is decided by HOW a function is called, not where it's defined. Method call → the object; bare call → undefined; arrow → inherits from its surroundings. Fix a detached method with .bind(user) or an arrow.",
+          lanes: { Call: ["—"], "this →": ["set by the call site"], Result: ["user.greet.bind(user) → works"] },
+        },
+      ],
+    },
     practiceTask:
       "Explain why `const g = user.greet; g()` loses `this`, and two ways to fix it (bind, or an arrow wrapper).",
     practiceStarter: `// Why does this break, and how do you fix it?
@@ -218,6 +342,63 @@ class Dog extends Animal {
 }
 new Dog('Rex').speak(); // "Rex barks"`,
     },
+    visualization: {
+      language: "ts",
+      code: `class Animal {
+  speak() { return this.name + ' makes a sound'; }
+}
+class Dog extends Animal {
+  speak() { return this.name + ' barks'; }
+}
+new Dog('Rex').speak();`,
+      lanes: ["Object", "Prototype chain", "Result"],
+      frames: [
+        {
+          line: 7,
+          note: "new Dog('Rex') builds an object with its OWN property name='Rex', linked to Dog.prototype, which links up to Animal.prototype, then Object.prototype.",
+          lanes: {
+            Object: ["rex = { name: 'Rex' }"],
+            "Prototype chain": ["rex", "Dog.prototype", "Animal.prototype", "Object.prototype"],
+            Result: [],
+          },
+        },
+        {
+          line: 7,
+          note: "Calling rex.speak() first looks for `speak` on the object ITSELF. rex only has `name` — not found here.",
+          lanes: {
+            Object: ["rex = { name: 'Rex' }"],
+            "Prototype chain": ["rex 👈 no speak", "Dog.prototype", "Animal.prototype", "Object.prototype"],
+            Result: [],
+          },
+        },
+        {
+          line: 5,
+          note: "Not found, so walk UP one link to Dog.prototype. speak() is here (Dog's override). The search stops and this method runs.",
+          lanes: {
+            Object: ["rex = { name: 'Rex' }"],
+            "Prototype chain": ["rex", "Dog.prototype 👈 speak() ✓", "Animal.prototype", "Object.prototype"],
+            Result: ["Dog.prototype.speak()"],
+          },
+        },
+        {
+          line: 2,
+          note: "If Dog had NOT defined speak, the search would keep walking up to Animal.prototype.speak ('makes a sound'). That's the prototype chain — lookups climb it until found.",
+          lanes: {
+            Object: ["rex = { name: 'Rex' }"],
+            "Prototype chain": ["rex", "Dog.prototype (no speak)", "Animal.prototype 👈 fallback", "Object.prototype"],
+            Result: ["would be 'Rex makes a sound'"],
+          },
+        },
+        {
+          note: "Because Dog overrides speak, the answer is 'Rex barks'. `class` is just friendly syntax over this prototype-chain lookup.",
+          lanes: {
+            Object: ["rex = { name: 'Rex' }"],
+            "Prototype chain": ["rex", "Dog.prototype ✓", "Animal.prototype", "Object.prototype"],
+            Result: ["'Rex barks'"],
+          },
+        },
+      ],
+    },
     practiceTask:
       "Explain where `speak` lives (on the prototype, not each instance) and why that saves memory for 1000 dogs.",
     practiceStarter: `// Reasoning exercise:
@@ -275,6 +456,55 @@ Animal.prototype.speak = function () { return this.name + ' makes a sound'; };
 const b = { ...a };       // shallow copy
 b.user.age = 99;
 a.user.age;               // 99 — nested object was shared!`,
+    },
+    visualization: {
+      language: "ts",
+      code: `const a = { user: { age: 20 } };
+const b = { ...a };
+b.user.age = 99;
+a.user.age; // ?`,
+      lanes: ["Variables", "Heap (objects)"],
+      frames: [
+        {
+          line: 1,
+          note: "a points to object #1. Its `user` field isn't a value — it's a reference to a SEPARATE object #2.",
+          lanes: {
+            Variables: ["a → #1"],
+            "Heap (objects)": ["#1: { user → #2 }", "#2: { age: 20 }"],
+          },
+        },
+        {
+          line: 2,
+          note: "Spread builds a NEW top-level object #3 and copies a's slots into it — but the `user` slot is copied as-is: the same reference to #2. That's what 'shallow' means.",
+          lanes: {
+            Variables: ["a → #1", "b → #3"],
+            "Heap (objects)": ["#1: { user → #2 }", "#2: { age: 20 }", "#3: { user → #2 }"],
+          },
+        },
+        {
+          line: 3,
+          note: "b.user is #2. a.user is ALSO #2 — the same object. Mutating it through b changes the one shared object.",
+          lanes: {
+            Variables: ["a → #1", "b → #3"],
+            "Heap (objects)": ["#1: { user → #2 }", "#2: { age: 99 }", "#3: { user → #2 }"],
+          },
+        },
+        {
+          line: 4,
+          note: "So a.user.age is 99, even though we only touched b. The top level was copied; the nested object was shared.",
+          lanes: {
+            Variables: ["a → #1", "b → #3"],
+            "Heap (objects)": ["#1: { user → #2 }", "#2: { age: 99 }", "#3: { user → #2 }"],
+          },
+        },
+        {
+          note: "Takeaway: a shallow copy duplicates only the top level. For independent nested data, deep-clone (e.g. structuredClone(a)).",
+          lanes: {
+            Variables: ["a → #1", "b → #3"],
+            "Heap (objects)": ["#1: { user → #2 }", "#2: { age: 99 }", "#3: { user → #2 }"],
+          },
+        },
+      ],
     },
     practiceTask:
       "Run the editor to PROVE spread is shallow: copy a nested object, mutate the copy's nested field, and log the original.",
