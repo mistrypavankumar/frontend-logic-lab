@@ -10,6 +10,7 @@ import { Eli5Toggle } from "./Eli5";
 const primary = [
   { href: "/learn", label: "Learn" },
   { href: "/modern", label: "Modern JS" },
+  { href: "/dsa", label: "DSA" },
   { href: "/practice", label: "Practice" },
   { href: "/labs", label: "Labs" },
   { href: "/progress", label: "Progress" },
