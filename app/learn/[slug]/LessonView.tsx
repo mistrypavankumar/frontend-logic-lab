@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { allLessons } from "@/data";
-import { Lesson } from "@/lib/types";
+import { allLessons, getChallengeById, getLessonById } from "@/data";
+import { Lesson, Challenge } from "@/lib/types";
 import Section from "@/components/Section";
 import CodeBlock from "@/components/CodeBlock";
 import ChallengeWorkspace from "@/components/ChallengeWorkspace";
@@ -18,6 +18,7 @@ import MentalModel from "@/components/MentalModel";
 import ConceptVisualizer from "@/components/ConceptVisualizer";
 import MethodComparison from "@/components/MethodComparison";
 import Pseudocode from "@/components/Pseudocode";
+import WorkedExamples from "@/components/WorkedExamples";
 import FadedExample from "@/components/FadedExample";
 import PredictOutput from "@/components/PredictOutput";
 import DryRun from "@/components/DryRun";
@@ -46,6 +47,23 @@ export default function LessonView({ lesson }: { lesson: Lesson }) {
   const next = lesson.nextLessonSlug
     ? allLessons.find((l) => l.slug === lesson.nextLessonSlug)
     : undefined;
+  // Challenges that drill THIS concept — turns "I read it" into "I can do it".
+  const drills: Challenge[] = (lesson.practiceChallengeIds ?? [])
+    .map((cid) => getChallengeById(cid))
+    .filter((c): c is Challenge => c !== undefined);
+
+  // "Keep learning" — explicit nextLessonIds if set, otherwise sibling lessons
+  // that share a method/topic (so every lesson links onward automatically).
+  const relatedLessons: Lesson[] = (
+    lesson.nextLessonIds && lesson.nextLessonIds.length > 0
+      ? lesson.nextLessonIds.map((lid) => getLessonById(lid)).filter((l): l is Lesson => !!l)
+      : allLessons.filter(
+          (l) =>
+            l.id !== lesson.id &&
+            l.slug !== lesson.nextLessonSlug &&
+            (l.relatedMethods ?? []).some((m) => (lesson.relatedMethods ?? []).includes(m))
+        )
+  ).slice(0, 4);
   const done = loaded && isLessonDone(lesson.id);
   const bookmarked = loaded && isBookmarked("lesson", lesson.id);
   const inRevision = loaded && isInRevision("lesson", lesson.id);
@@ -88,6 +106,12 @@ export default function LessonView({ lesson }: { lesson: Lesson }) {
         <Section icon="💻" title="Small code example">
           <CodeBlock code={lesson.codeExample.code} language={lesson.codeExample.language} />
         </Section>
+
+        {lesson.examples && lesson.examples.length > 0 && (
+          <Section icon="🔁" title={`More examples · the same idea ${lesson.examples.length} ways`}>
+            <WorkedExamples examples={lesson.examples} />
+          </Section>
+        )}
 
         {lesson.visualization && (
           <Section icon="▶️" title="Step through the execution">
@@ -260,6 +284,43 @@ export default function LessonView({ lesson }: { lesson: Lesson }) {
         {lesson.commonMistakes && lesson.commonMistakes.length > 0 && (
           <Section icon="🚫" title="Common mistakes">
             <CommonMistakes items={lesson.commonMistakes} />
+          </Section>
+        )}
+
+        {drills.length > 0 && (
+          <Section icon="🏋️" title="Practice this concept">
+            <p className="mb-3 text-sm text-slate-500">
+              Reading it isn&apos;t knowing it — drill the same idea on real problems.
+            </p>
+            <ul className="space-y-2">
+              {drills.map((c) => (
+                <li key={c.id}>
+                  <Link
+                    href={`/practice/${c.slug}`}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                  >
+                    <span>{c.title}</span>
+                    <DifficultyBadge level={c.difficulty} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+
+        {relatedLessons.length > 0 && (
+          <Section icon="🧭" title="Keep learning">
+            <div className="flex flex-wrap gap-2">
+              {relatedLessons.map((l) => (
+                <Link
+                  key={l.id}
+                  href={`/learn/${l.slug}`}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm hover:border-brand-300 hover:text-brand-700"
+                >
+                  {l.title}
+                </Link>
+              ))}
+            </div>
           </Section>
         )}
 

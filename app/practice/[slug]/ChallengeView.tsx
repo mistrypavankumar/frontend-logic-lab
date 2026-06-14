@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Challenge, TestCase } from "@/lib/types";
-import { getChallenge } from "@/data";
+import { Challenge, Lesson, TestCase } from "@/lib/types";
+import { getChallenge, allLessons } from "@/data";
 import Section from "@/components/Section";
 import CodeBlock from "@/components/CodeBlock";
 import ChallengeWorkspace from "@/components/ChallengeWorkspace";
+import TestWritingPanel from "@/components/TestWritingPanel";
 import HintSection from "@/components/HintSection";
 import ProgressiveHints from "@/components/ProgressiveHints";
 import DifficultyBadge from "@/components/DifficultyBadge";
@@ -26,6 +27,7 @@ import MentalModel from "@/components/MentalModel";
 import MethodComparison from "@/components/MethodComparison";
 import MultipleSolutions from "@/components/MultipleSolutions";
 import DebugChallengePanel from "@/components/DebugChallengePanel";
+import AiReviewPanel from "@/components/AiReviewPanel";
 import LogicScore from "@/components/LogicScore";
 import SelfExplain from "@/components/SelfExplain";
 import ConfidenceRating from "@/components/ConfidenceRating";
@@ -74,11 +76,38 @@ export default function ChallengeView({ challenge }: { challenge: Challenge }) {
   const visibleTests = challenge.tests ?? [];
   const hiddenTests = challenge.hiddenTests ?? [];
   const allTests: TestCase[] = [...visibleTests, ...hiddenTests];
+  // "Passed edge cases" = the suite tests beyond the happy path (any non-"normal"
+  // kind, e.g. empty / mutation / nullish), whether those tests are visible or hidden.
+  const hasEdgeTests =
+    hiddenTests.length > 0 || allTests.some((t) => t.kind && t.kind !== "normal");
+
+  // Which Logic Score signals are achievable for THIS challenge (so the score
+  // doesn't show points you can't possibly earn here).
+  const hasPredict = (challenge.predictOutput?.length ?? 0) > 0;
+  const applicableScore: (keyof typeof score)[] = [
+    "solvedWithoutSolution",
+    ...(hasEdgeTests ? (["passedEdgeCases"] as const) : []),
+    ...(hasPredict ? (["predictedCorrectly"] as const) : []),
+    "solvedManually",
+    "solvedBuiltIn",
+  ];
 
   const internalCode = challenge.internalImplementation?.code ?? challenge.solution;
   const related = (challenge.relatedChallengeSlugs ?? [])
     .map((s) => getChallenge(s))
     .filter((c): c is Challenge => c !== undefined);
+
+  // Lessons that TEACH this challenge — a lesson that lists it as practice, or
+  // one that covers a method this challenge uses. Lets a stuck learner go learn.
+  const teachingLessons: Lesson[] = allLessons
+    .filter(
+      (l) =>
+        (l.practiceChallengeIds ?? []).includes(id) ||
+        (l.relatedMethods ?? []).some((m) =>
+          (challenge.relatedMethods ?? []).includes(m)
+        )
+    )
+    .slice(0, 4);
 
   const onSolutionRevealed = () => markSolutionViewed(id);
 
@@ -102,6 +131,16 @@ export default function ChallengeView({ challenge }: { challenge: Challenge }) {
           {challenge.isDebugChallenge && (
             <span className="rounded bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700">
               🐞 Debug
+            </span>
+          )}
+          {challenge.isAiReview && (
+            <span className="rounded bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+              🤖 AI review
+            </span>
+          )}
+          {challenge.isTestWriting && (
+            <span className="rounded bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700">
+              🧪 Write tests
             </span>
           )}
           {done && <span className="text-sm text-green-600">✓ Solved</span>}
@@ -152,6 +191,13 @@ export default function ChallengeView({ challenge }: { challenge: Challenge }) {
           </Section>
         )}
 
+        {/* Review the AI's code — judge it before running */}
+        {challenge.aiReview && (
+          <Section icon="🤖" title="Review the AI's code">
+            <AiReviewPanel review={challenge.aiReview} code={challenge.starterCode} />
+          </Section>
+        )}
+
         {/* Debug-this-code exercise (when this challenge is a debug exercise) */}
         {challenge.debugChallenge && (
           <Section icon="🐞" title="Debug this code">
@@ -180,39 +226,56 @@ export default function ChallengeView({ challenge }: { challenge: Challenge }) {
           </Section>
         )}
 
-        {/* 5 · Try yourself */}
-        <Section icon="🚀" title="5 · Try it yourself">
-          <ChallengeWorkspace
-            key={id}
-            starterCode={challenge.starterCode}
-            tests={allTests.length > 0 ? allTests : undefined}
-            notRunnableHint={
-              challenge.flags?.async
-                ? "This one is timing/runtime-based — reason it through, then run it in your own project."
-                : "Build & run this in your own project."
-            }
-            onResult={(passed) => {
-              setAttempted(true);
-              if (!passed) {
-                recordScore(id, { everFailed: true });
-                recordReview(id, { passed: false }); // bring it back sooner
-              }
-            }}
-            onAllPassed={() => {
-              setAttempted(true);
-              setJustSolved(true);
-              if (!isChallengeDone(id)) toggleChallenge(id);
-              recordScore(id, {
-                solvedWithoutSolution: !isSolutionViewed(id),
-                passedEdgeCases: hiddenTests.length > 0,
-              });
-            }}
-          />
-          <p className="mt-2 text-sm text-slate-500">
-            {allTests.length > 0
-              ? "Edit the code and hit Run — checked against all test cases (including hidden edge cases)."
-              : "Edit freely here, then build it in your own project."}
-          </p>
+        {/* 5 · Try yourself (or: write the tests) */}
+        <Section
+          icon={challenge.testWriting ? "🧪" : "🚀"}
+          title={challenge.testWriting ? "5 · Write the tests" : "5 · Try it yourself"}
+        >
+          {challenge.testWriting ? (
+            <TestWritingPanel
+              spec={challenge.testWriting}
+              onSolved={() => {
+                setAttempted(true);
+                setJustSolved(true);
+                if (!isChallengeDone(id)) toggleChallenge(id);
+                recordReview(id, { passed: true, confidence: 4 });
+              }}
+            />
+          ) : (
+            <>
+              <ChallengeWorkspace
+                key={id}
+                starterCode={challenge.starterCode}
+                tests={allTests.length > 0 ? allTests : undefined}
+                notRunnableHint={
+                  challenge.flags?.async
+                    ? "This one is timing/runtime-based — reason it through, then run it in your own project."
+                    : "Build & run this in your own project."
+                }
+                onResult={(passed) => {
+                  setAttempted(true);
+                  if (!passed) {
+                    recordScore(id, { everFailed: true });
+                    recordReview(id, { passed: false }); // bring it back sooner
+                  }
+                }}
+                onAllPassed={() => {
+                  setAttempted(true);
+                  setJustSolved(true);
+                  if (!isChallengeDone(id)) toggleChallenge(id);
+                  recordScore(id, {
+                    solvedWithoutSolution: !isSolutionViewed(id),
+                    passedEdgeCases: hasEdgeTests,
+                  });
+                }}
+              />
+              <p className="mt-2 text-sm text-slate-500">
+                {allTests.length > 0
+                  ? "Edit the code and hit Run — checked against all test cases (including hidden edge cases)."
+                  : "Edit freely here, then build it in your own project."}
+              </p>
+            </>
+          )}
 
           {/* Confidence rating → tunes the spaced-repetition schedule */}
           {justSolved && (
@@ -259,7 +322,7 @@ export default function ChallengeView({ challenge }: { challenge: Challenge }) {
           {/* Logic Score + self-report how you solved it */}
           {loaded && (
             <div className="mt-4 space-y-2">
-              <LogicScore score={score} />
+              <LogicScore score={score} applicable={applicableScore} />
               <div className="flex flex-wrap gap-2">
                 <SelfReport
                   label="I solved it manually"
@@ -418,6 +481,26 @@ export default function ChallengeView({ challenge }: { challenge: Challenge }) {
                   {challenge.industrialNotes.map((n, i) => <li key={i}>{n}</li>)}
                 </ul>
               )}
+            </div>
+          </Section>
+        )}
+
+        {/* Learn the concept — jump to the lessons that teach this */}
+        {teachingLessons.length > 0 && (
+          <Section icon="📚" title="Learn the concept">
+            <p className="mb-3 text-sm text-slate-500">
+              Stuck, or want the theory? These lessons cover what this challenge uses.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {teachingLessons.map((l) => (
+                <Link
+                  key={l.id}
+                  href={`/learn/${l.slug}`}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm hover:border-brand-300 hover:text-brand-700"
+                >
+                  {l.title}
+                </Link>
+              ))}
             </div>
           </Section>
         )}

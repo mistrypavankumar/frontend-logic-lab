@@ -5,6 +5,8 @@ export const metadata = { title: "Labs — Frontend Logic Lab" };
 const labs = [
   { href: "/labs/async", icon: "⚡", title: "Async JavaScript Lab", desc: "Promises, retries, timeouts, concurrency, cancellation, caching." },
   { href: "/labs/data", icon: "🔀", title: "Data Transformation Lab", desc: "Normalize, group, flatten, trees, breadcrumbs, query strings, merge." },
+  { href: "/practice?flag=aiReview", icon: "🤖", title: "AI Code Review", desc: "Judge AI-written code, catch the bug it confidently shipped, then fix it — the #1 skill when AI writes the first draft." },
+  { href: "/practice?flag=testWriting", icon: "🧪", title: "Write the Tests", desc: "Don't write the code — write the tests. Design a suite that accepts the correct solution and catches every buggy one." },
 ];
 
 export default function LabsPage() {

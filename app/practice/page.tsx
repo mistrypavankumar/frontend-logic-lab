@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { allChallenges, challengeTopics, allMethods } from "@/data";
 import ChallengeCard from "@/components/ChallengeCard";
 import ProgressBar from "@/components/ProgressBar";
-import FilterBar, { FilterValue, EMPTY_FILTER } from "@/components/FilterBar";
+import FilterBar, { FilterValue, EMPTY_FILTER, FlagKey } from "@/components/FilterBar";
 import { useProgress } from "@/lib/useProgress";
 
 export default function PracticePage() {
@@ -19,9 +19,14 @@ export default function PracticePage() {
     const params = new URLSearchParams(window.location.search);
     const method = params.get("method");
     const topic = params.get("topic");
+    const flag = params.get("flag");
+    const knownFlags: FlagKey[] = [
+      "aiReview", "testWriting", "builtInAvailable", "interview", "async", "dataTransformation", "realWorld",
+    ];
     const next: Partial<FilterValue> = {};
     if (method && allMethods.includes(method)) next.method = method;
     if (topic && challengeTopics.includes(topic)) next.topic = topic;
+    if (flag && knownFlags.includes(flag as FlagKey)) next.flags = [flag as FlagKey];
     if (Object.keys(next).length > 0) setFilter((f) => ({ ...f, ...next }));
   }, []);
 

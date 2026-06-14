@@ -26,6 +26,8 @@ export const EMPTY_FILTER: FilterValue = {
 };
 
 const FLAGS: { key: FlagKey; label: string }[] = [
+  { key: "aiReview", label: "🤖 AI review" },
+  { key: "testWriting", label: "🧪 Write tests" },
   { key: "builtInAvailable", label: "Has built-in" },
   { key: "interview", label: "Interview" },
   { key: "async", label: "Async" },
