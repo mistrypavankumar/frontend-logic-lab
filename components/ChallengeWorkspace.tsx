@@ -1,10 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TestCase } from "@/lib/types";
 import { runChallenge, RunResult } from "@/lib/runner";
 import CodeEditor from "./CodeEditor";
 import LiveTrace from "./LiveTrace";
+
+// Targeted nudge for a failing test, by its kind — turns a red X into a hint.
+const KIND_HINT: Record<string, string> = {
+  empty: "Empty-input case failed — what should an empty input return (e.g. [] or 0), instead of crashing?",
+  mutation: "Mutation check failed — you're changing the input. Return a NEW value (copy first) instead.",
+  nullish: "Null/undefined case failed — guard against missing values before using them.",
+  invalid: "Invalid-input case failed — handle unexpected input instead of assuming it's well-formed.",
+  duplicate: "Duplicates case failed — make sure repeated values are handled correctly.",
+  large: "Large-input case failed — check for an off-by-one or an O(n²) step that breaks at scale.",
+  performance: "Performance case failed — your approach is likely too slow; aim for a lower complexity.",
+};
+
+const codeKey = (k: string) => `fll-code:${k}`;
 
 // The interactive code box used by both challenges and lessons.
 // - With tests: runs the learner's code and grades each case.
@@ -17,6 +30,7 @@ export default function ChallengeWorkspace({
   notRunnableHint = "This is a React component — build & run it in your own project.",
   onAllPassed,
   onResult,
+  persistKey,
 }: {
   starterCode: string;
   tests?: TestCase[];
@@ -25,10 +39,37 @@ export default function ChallengeWorkspace({
   onAllPassed?: () => void;
   /** Fired after every graded run with whether all tests passed. */
   onResult?: (allPassed: boolean) => void;
+  /** If set, the in-progress code is autosaved/restored under this key. */
+  persistKey?: string;
 }) {
-  const [code, setCode] = useState(starterCode);
+  const [code, setCodeRaw] = useState(starterCode);
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
+
+  // Restore any in-progress code on mount (after hydration → no mismatch).
+  useEffect(() => {
+    if (!persistKey) return;
+    try {
+      const saved = window.localStorage.getItem(codeKey(persistKey));
+      if (saved != null && saved !== starterCode) setCodeRaw(saved);
+    } catch {
+      /* ignore */
+    }
+    // Only on mount / when the challenge changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistKey]);
+
+  // Autosave on every edit (or clear the entry when back at the starter).
+  const setCode = (next: string) => {
+    setCodeRaw(next);
+    if (!persistKey) return;
+    try {
+      if (next === starterCode) window.localStorage.removeItem(codeKey(persistKey));
+      else window.localStorage.setItem(codeKey(persistKey), next);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const hasTests = !!tests && tests.length > 0;
   // Runnable if it has tests, or explicitly marked runnable (console mode).
@@ -126,20 +167,27 @@ export default function ChallengeWorkspace({
               </div>
               <code className="mt-1 block text-xs text-slate-500">{c.call}</code>
               {!c.passed && (
-                <div className="mt-2 space-y-0.5 font-mono text-xs">
-                  {c.error ? (
-                    <div className="text-rose-700">threw: {c.error}</div>
-                  ) : (
-                    <>
-                      <div className="text-slate-600">
-                        expected: <span className="text-green-700">{c.expected}</span>
-                      </div>
-                      <div className="text-slate-600">
-                        got: <span className="text-rose-700">{c.actual}</span>
-                      </div>
-                    </>
+                <>
+                  <div className="mt-2 space-y-0.5 font-mono text-xs">
+                    {c.error ? (
+                      <div className="text-rose-700">threw: {c.error}</div>
+                    ) : (
+                      <>
+                        <div className="text-slate-600">
+                          expected: <span className="text-green-700">{c.expected}</span>
+                        </div>
+                        <div className="text-slate-600">
+                          got: <span className="text-rose-700">{c.actual}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {c.kind && KIND_HINT[c.kind] && (
+                    <p className="mt-2 rounded bg-amber-100 px-2 py-1 text-xs text-amber-900">
+                      💡 {KIND_HINT[c.kind]}
+                    </p>
                   )}
-                </div>
+                </>
               )}
             </div>
           ))}

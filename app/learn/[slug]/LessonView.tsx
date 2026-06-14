@@ -227,6 +227,7 @@ export default function LessonView({ lesson }: { lesson: Lesson }) {
           <Section icon="⌨️" title="Your code">
             <ChallengeWorkspace
               key={lesson.id}
+              persistKey={`lesson:${lesson.id}`}
               starterCode={lesson.practiceStarter}
               tests={lesson.practiceTests}
               runnable={lesson.practiceRunnable}

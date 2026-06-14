@@ -245,6 +245,7 @@ export default function ChallengeView({ challenge }: { challenge: Challenge }) {
             <>
               <ChallengeWorkspace
                 key={id}
+                persistKey={`challenge:${id}`}
                 starterCode={challenge.starterCode}
                 tests={allTests.length > 0 ? allTests : undefined}
                 notRunnableHint={

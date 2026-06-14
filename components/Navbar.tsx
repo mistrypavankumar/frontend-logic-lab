@@ -4,10 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Eli5Toggle } from "./Eli5";
+import StreakBadge from "./StreakBadge";
 
 // Primary links (always visible on desktop) + secondary links (in a "More"
 // dropdown on desktop). Mobile shows everything in the hamburger menu.
 const primary = [
+  { href: "/daily", label: "Daily" },
   { href: "/learn", label: "Learn" },
   { href: "/modern", label: "Modern JS" },
   { href: "/dsa", label: "DSA" },
@@ -84,20 +86,24 @@ export default function Navbar() {
             )}
           </div>
 
-          <div className="ml-1 border-l border-slate-200 pl-2">
+          <div className="ml-1 flex items-center gap-2 border-l border-slate-200 pl-2">
+            <StreakBadge />
             <Eli5Toggle />
           </div>
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          className="rounded-md p-2 text-slate-600 hover:bg-slate-100 md:hidden"
-          onClick={() => setOpen((o) => !o)}
-          aria-label="Toggle menu"
-          aria-expanded={open}
-        >
-          {open ? "✕" : "☰"}
-        </button>
+        {/* Mobile: streak stays visible next to the menu button */}
+        <div className="flex items-center gap-2 md:hidden">
+          <StreakBadge />
+          <button
+            className="rounded-md p-2 text-slate-600 hover:bg-slate-100"
+            onClick={() => setOpen((o) => !o)}
+            aria-label="Toggle menu"
+            aria-expanded={open}
+          >
+            {open ? "✕" : "☰"}
+          </button>
+        </div>
       </nav>
 
       {open && (

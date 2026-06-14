@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { allDsaTopics, getChallenge } from "@/data";
 import { Challenge, Difficulty, DIFFICULTIES } from "@/lib/types";
 import ChallengeCard from "@/components/ChallengeCard";
@@ -73,6 +74,21 @@ export default function DsaPage() {
       <div className="mb-6 max-w-md">
         <ProgressBar value={solved} total={allProblems.length} label="DSA problems solved" />
       </div>
+
+      <Link
+        href="/dsa/patterns"
+        className="mb-8 flex items-center justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 transition hover:border-brand-300"
+      >
+        <div>
+          <p className="font-semibold text-slate-800">🎯 Which Pattern? — train pattern recognition</p>
+          <p className="text-sm text-slate-600">
+            Read a problem, pick the pattern. The meta-skill interviews actually test.
+          </p>
+        </div>
+        <span className="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white">
+          Start →
+        </span>
+      </Link>
 
       {/* Search + difficulty filter */}
       <div className="mb-10 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
