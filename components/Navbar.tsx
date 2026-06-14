@@ -9,16 +9,17 @@ import StreakBadge from "./StreakBadge";
 // Primary links (always visible on desktop) + secondary links (in a "More"
 // dropdown on desktop). Mobile shows everything in the hamburger menu.
 const primary = [
+  { href: "/path", label: "Roadmap" },
   { href: "/daily", label: "Daily" },
   { href: "/learn", label: "Learn" },
-  { href: "/modern", label: "Modern JS" },
   { href: "/dsa", label: "DSA" },
   { href: "/practice", label: "Practice" },
-  { href: "/labs", label: "Labs" },
   { href: "/progress", label: "Progress" },
 ];
 
 const secondary = [
+  { href: "/modern", label: "Modern JS" },
+  { href: "/labs", label: "Labs" },
   { href: "/read", label: "Read" },
   { href: "/internals", label: "Internals" },
   { href: "/interview", label: "Interview" },

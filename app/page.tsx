@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { orderedLessons, allChallenges as challenges } from "@/data";
 import TopicCard from "@/components/TopicCard";
+import ContinuePath from "@/components/ContinuePath";
 
 export default function HomePage() {
   const featured = orderedLessons.slice(0, 3);
@@ -44,6 +45,11 @@ export default function HomePage() {
             <Stat number="100%" label="Hands-on" />
           </div>
         </div>
+      </section>
+
+      {/* Personalized next step — your roadmap */}
+      <section className="mx-auto max-w-6xl px-4 pt-12">
+        <ContinuePath />
       </section>
 
       {/* How it works */}

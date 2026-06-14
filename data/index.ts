@@ -2,9 +2,10 @@
 // arrays the app consumes. Add new data files here and the whole app picks
 // them up. Pages should import from "@/data" — not the individual files.
 
-import { Lesson, Challenge, LessonCategory, Article, DsaTopic } from "@/lib/types";
+import { Lesson, Challenge, LessonCategory, Article, DsaTopic, PathStage } from "@/lib/types";
 import { articles } from "./articles";
 import { dsaTopics } from "./dsa";
+import { pathStages } from "./path";
 
 // --- lessons ---
 import { lessons as coreLessons } from "./lessons";
@@ -59,7 +60,6 @@ export const testWritingList = allChallenges.filter((c) => c.isTestWriting);
 export const internalsLessonList = orderedLessons.filter(
   (l) => l.category === "JavaScript Internals"
 );
-
 // --- lookups ---
 export function getLesson(slug: string): Lesson | undefined {
   return allLessons.find((l) => l.slug === slug);
@@ -80,6 +80,9 @@ export const allArticles: Article[] = articles;
 export function getArticle(slug: string): Article | undefined {
   return allArticles.find((a) => a.slug === slug);
 }
+
+// --- Roadmap ---
+export const allPathStages: PathStage[] = pathStages;
 
 // --- DSA ---
 export const allDsaTopics: DsaTopic[] = dsaTopics;

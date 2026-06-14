@@ -6,6 +6,7 @@ import ProgressBar from "@/components/ProgressBar";
 import StreakWidget from "@/components/StreakWidget";
 import RecentlyViewed from "@/components/RecentlyViewed";
 import ConceptMastery from "@/components/ConceptMastery";
+import ContinuePath from "@/components/ContinuePath";
 import { useProgress } from "@/lib/useProgress";
 import { totalLogicScore, isDue, todayKey } from "@/lib/progress";
 
@@ -32,6 +33,10 @@ export default function ProgressPage() {
           Saved in your browser with localStorage — no account needed.
         </p>
       </header>
+
+      <div className="mb-8">
+        <ContinuePath />
+      </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2">
         <StreakWidget />

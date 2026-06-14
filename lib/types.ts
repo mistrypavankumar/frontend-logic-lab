@@ -465,6 +465,32 @@ export interface DsaTopic {
   problemSlugs: string[];
 }
 
+// ---------------------------------------------------------------------------
+// Learning Roadmap — a single guided sequence (stages → steps) so a learner
+// always knows where to start and what to do next. Steps point at existing
+// lessons/challenges by slug, or are milestone markers.
+// ---------------------------------------------------------------------------
+
+export type PathStepRef =
+  | { kind: "lesson"; slug: string }
+  | { kind: "challenge"; slug: string }
+  | { kind: "milestone"; text: string };
+
+export interface PathStep {
+  ref: PathStepRef;
+  /** One line: why this step, here. */
+  why?: string;
+}
+
+export interface PathStage {
+  slug: string;
+  title: string;
+  icon: string;
+  /** What you'll be able to do after finishing this stage. */
+  goal: string;
+  steps: PathStep[];
+}
+
 /** A larger build-it-yourself project idea. */
 export interface Project {
   id: string;
