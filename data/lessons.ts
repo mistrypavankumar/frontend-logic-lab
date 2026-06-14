@@ -192,6 +192,33 @@ let isLearning = true;   // boolean
 
 console.log(name + " is " + age);`,
     },
+    mentalModel:
+      "A variable is a labeled box. `const` is a box you seal (can't reassign the label); `let` is a box you can swap the contents of later.",
+    examples: [
+      {
+        title: "const vs let",
+        code: `const country = "India"; // can't be reassigned
+let score = 0;           // can change
+score = 10;`,
+        output: "score → 10",
+        note: "Default to const; use let only when the value really changes.",
+      },
+      {
+        title: "Types at a glance",
+        code: `typeof "hi";    // "string"
+typeof 42;      // "number"
+typeof true;    // "boolean"
+typeof undefined; // "undefined"`,
+        note: "Strings, numbers, booleans are the everyday types; typeof tells you which.",
+      },
+      {
+        title: "Template literals (cleaner strings)",
+        code: `const name = "Pavan", age = 25;
+\`\${name} is \${age}\`;`,
+        output: `"Pavan is 25"`,
+        note: "Backticks with ${} read better than \"a\" + b + \"c\" concatenation.",
+      },
+    ],
     practiceTask:
       "Create a const for a product name and a let for its price. Then log a sentence like 'Shoes cost 1500'.",
     practiceStarter: `const product = "Shoes";
@@ -231,6 +258,41 @@ console.log(fruits[0]); // "apple"
 const user = { name: "Pavan", age: 25 };
 console.log(user.name); // "Pavan"`,
     },
+    mentalModel:
+      "An array is a numbered row of lockers (access by position: [0], [1], …). An object is a set of labeled drawers (access by name: .price, .name).",
+    examples: [
+      {
+        title: "Array — access & length",
+        code: `const fruits = ["apple", "banana", "mango"];
+fruits[1];        // "banana"
+fruits.length;    // 3`,
+        note: "Arrays are zero-indexed: the first item is [0].",
+      },
+      {
+        title: "Object — read & add fields",
+        code: `const user = { name: "Pavan", age: 25 };
+user.name;        // "Pavan"
+user.city = "Pune"; // add a new field`,
+        note: "Dot access reads a property; assigning a new key adds one.",
+      },
+      {
+        title: "Array OF objects (the real-world shape)",
+        code: `const products = [
+  { name: "Shoes", price: 1500 },
+  { name: "Bag", price: 900 },
+];
+products[0].name; // "Shoes"`,
+        output: `"Shoes"`,
+        note: "Most API data is exactly this: a list of objects.",
+      },
+      {
+        title: "Nested object",
+        code: `const order = { id: 1, customer: { name: "Ana" } };
+order.customer.name;`,
+        output: `"Ana"`,
+        note: "Chain the access to reach into nested data.",
+      },
+    ],
     practiceTask:
       "Make an array of 3 product objects, each with name and price. Then log the name of the second product.",
     practiceStarter: `const products = [
@@ -282,6 +344,43 @@ for (const n of nums) {
   console.log(n * 2); // 2, 4, 6
 }`,
     },
+    mentalModel:
+      "A condition is a fork in the road (go this way IF…). A loop is a conveyor belt — the same action runs once for every item that passes by.",
+    examples: [
+      {
+        title: "if / else if / else",
+        code: `const score = 75;
+if (score >= 90) "A";
+else if (score >= 50) "Pass";
+else "Fail";`,
+        output: `"Pass"`,
+        note: "Checks run top to bottom; the first true branch wins.",
+      },
+      {
+        title: "for…of — loop the values",
+        code: `for (const n of [1, 2, 3]) {
+  console.log(n * 2); // 2, 4, 6
+}`,
+        note: "for…of gives you each value directly — cleaner than a C-style index loop.",
+      },
+      {
+        title: "Condition inside a loop (filter by hand)",
+        code: `const evens = [];
+for (const n of [1, 2, 3, 4]) {
+  if (n % 2 === 0) evens.push(n);
+}
+evens; // [2, 4]`,
+        output: "[2, 4]",
+        note: "A loop + an if is exactly what Array.filter does for you.",
+      },
+      {
+        title: "Ternary — a one-line if/else",
+        code: `const age = 20;
+const label = age >= 18 ? "adult" : "minor";`,
+        output: `"adult"`,
+        note: "Great for picking one of two values; don't nest them deeply.",
+      },
+    ],
     practiceTask:
       "Given an array of numbers, loop through them and log only the even ones.",
     practiceStarter: `const nums = [1, 2, 3, 4, 5, 6];

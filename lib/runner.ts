@@ -8,6 +8,7 @@ export interface CaseResult {
   expected: string;
   actual: string;
   error?: string;
+  kind?: TestCase["kind"];
 }
 
 /** One recorded step of the live execution trace (the learner's own run). */
@@ -184,6 +185,7 @@ export async function runChallenge(
         expected,
         actual: "—",
         error: r?.error ?? "did not run",
+        kind: t.kind,
       };
     }
     return {
@@ -192,6 +194,7 @@ export async function runChallenge(
       passed: r.value === expected,
       expected,
       actual: r.value ?? "undefined",
+      kind: t.kind,
     };
   });
 
