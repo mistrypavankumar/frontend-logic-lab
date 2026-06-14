@@ -1,4 +1,4 @@
-import { TestCase } from "./types";
+import { TestCase, BuggyImpl } from "./types";
 import { instrumentLoops } from "./instrument";
 
 export interface CaseResult {
@@ -196,4 +196,88 @@ export async function runChallenge(
   });
 
   return { logs, cases, trace: raw.trace ?? [] };
+}
+
+// ---------------------------------------------------------------------------
+// "Write the tests" mode — run the learner's tests against several
+// implementations and report which were accepted / caught.
+// ---------------------------------------------------------------------------
+
+export interface TestAssertion {
+  name: string;
+  pass: boolean;
+  error?: string;
+}
+
+export interface ImplResult {
+  label: string;
+  /** True for the canonical correct implementation. */
+  isCorrect: boolean;
+  assertions: TestAssertion[];
+  /** A correct impl is "ok" when every assertion passes; a buggy impl is
+   *  "caught" when at least one assertion fails (or throws). */
+  allPass: boolean;
+  fatalError?: string; // syntax error in the learner's tests
+}
+
+// Runs the learner's test code once with `implCode` defining the target
+// function, plus a `test(name, cond)` recorder and an `eq(a,b)` deep-compare.
+function runTestsAgainst(testCode: string, implCode: string): {
+  assertions: TestAssertion[];
+  fatalError?: string;
+} {
+  const body = `
+    "use strict";
+    const __r = [];
+    const test = (name, cond) => __r.push({ name: String(name == null ? "" : name), pass: !!cond });
+    const eq = (a, b) => __show(a) === __show(b);
+    // ---- implementation under test ----
+    ${implCode}
+    // ---- the learner's tests ----
+    try {
+      ${testCode}
+    } catch (__e) {
+      __r.push({ name: "(error while running your tests)", pass: false, error: String(__e) });
+    }
+    return __r;
+  `;
+  try {
+    const fn = new Function("__show", body) as (s: typeof show) => TestAssertion[];
+    return { assertions: fn(show) };
+  } catch (e) {
+    return { assertions: [], fatalError: String(e) };
+  }
+}
+
+export function runTestWriting(
+  testCode: string,
+  correctImpl: string,
+  buggyImpls: BuggyImpl[]
+): ImplResult[] {
+  const out: ImplResult[] = [];
+
+  const correct = runTestsAgainst(testCode, correctImpl);
+  out.push({
+    label: "Correct solution",
+    isCorrect: true,
+    assertions: correct.assertions,
+    allPass:
+      !correct.fatalError &&
+      correct.assertions.length > 0 &&
+      correct.assertions.every((a) => a.pass),
+    fatalError: correct.fatalError,
+  });
+
+  for (const buggy of buggyImpls) {
+    const r = runTestsAgainst(testCode, buggy.code);
+    out.push({
+      label: buggy.label,
+      isCorrect: false,
+      assertions: r.assertions,
+      allPass: !r.fatalError && r.assertions.length > 0 && r.assertions.every((a) => a.pass),
+      fatalError: r.fatalError,
+    });
+  }
+
+  return out;
 }

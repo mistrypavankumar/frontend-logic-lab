@@ -230,8 +230,25 @@ export interface MethodComparison {
   whenToUse?: string[]; // guidance bullets ("Use built-in when …")
 }
 
+/**
+ * One of several short, varied examples of the SAME concept. Seeing an idea a
+ * few different ways (different inputs/shapes) before practising is how it
+ * actually sticks (the worked-example + variability effect).
+ */
+export interface WorkedExample {
+  title?: string; // e.g. "Sort objects by a field"
+  code: string;
+  /** One line: what to notice in this variation. */
+  note?: string;
+  /** Optional result, shown as a comment-style chip. */
+  output?: string;
+  language?: string;
+}
+
 /** Fields shared by lessons and challenges that power the new learning UX. */
 export interface LearningAids {
+  /** Several small, varied examples of the same concept. */
+  examples?: WorkedExample[];
   /** "Imagine checking each item one by one…" — a picture for the mind. */
   mentalModel?: string;
   /** Plain-language explanation for the "Explain like I'm new" toggle. */
@@ -305,6 +322,46 @@ export interface ChallengeFlags {
   async?: boolean;
   dataTransformation?: boolean;
   realWorld?: boolean;
+  /** "Review the AI's code" challenge — judge & fix AI-generated code. */
+  aiReview?: boolean;
+  /** "Write the tests" challenge — design tests that catch bugs. */
+  testWriting?: boolean;
+}
+
+/** One (deliberately buggy) implementation a test suite should catch. */
+export interface BuggyImpl {
+  label: string; // short description shown after the run
+  code: string; // defines the target function, with a bug
+}
+
+/**
+ * A "write the tests" exercise. The learner writes test cases; we run them
+ * against the correct implementation (all should pass) and several buggy ones
+ * (good tests catch each bug). Trains the verification skill AI makes essential.
+ */
+export interface TestWritingSpec {
+  functionName: string; // the function the learner is testing, e.g. "average"
+  starterTests?: string; // starter test code (uses test() / eq())
+  correctImpl: string; // source defining functionName correctly
+  buggyImpls: BuggyImpl[];
+}
+
+/**
+ * An "AI code review" exercise: the learner judges AI-written code BEFORE
+ * running it (the #1 skill when AI writes the first draft), then verifies and
+ * fixes it in the editor.
+ */
+export type AiVerdict = "buggy" | "works-but-flawed" | "correct";
+
+export interface AiReview {
+  /** The prompt a teammate gave the AI. */
+  prompt: string;
+  /** The truth about the AI's output. */
+  verdict: AiVerdict;
+  /** What's actually wrong (or why it only LOOKS right). */
+  issue: string;
+  /** The transferable review skill to carry away. */
+  reviewLesson: string;
 }
 
 /** A standalone logic challenge in the practice bank. */
@@ -353,11 +410,40 @@ export interface Challenge extends LearningAids {
   debugChallenge?: DebugChallenge;
   /** Marks a challenge as a "fix the broken code" exercise (drives filters). */
   isDebugChallenge?: boolean;
+
+  // --- AI code review challenges ---
+  aiReview?: AiReview;
+  /** Marks a challenge as a "review the AI's code" exercise. */
+  isAiReview?: boolean;
+
+  // --- write-the-tests challenges ---
+  testWriting?: TestWritingSpec;
+  /** Marks a challenge as a "write tests that catch bugs" exercise. */
+  isTestWriting?: boolean;
 }
 
 // ---------------------------------------------------------------------------
 // Project (unchanged)
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Article — a short developer story/essay for the Reading Room. Doubles as
+// read-aloud practice material (clear prose, natural sentence rhythm).
+// ---------------------------------------------------------------------------
+
+export interface Article {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  minutes: number; // approximate read-aloud time
+  level: Difficulty;
+  tags: string[];
+  /** Paragraphs of body text. The reader splits these into sentences. */
+  body: string[];
+  /** The engineering lessons to carry away. */
+  takeaways: string[];
+}
 
 /** A larger build-it-yourself project idea. */
 export interface Project {

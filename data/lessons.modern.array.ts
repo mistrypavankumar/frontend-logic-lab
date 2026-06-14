@@ -25,6 +25,33 @@ export const modernArrayLessons: Lesson[] = [
 const sorted = nums.toSorted((a, b) => a - b);
 // sorted -> [1, 2, 3], nums is still [3, 1, 2]`,
     },
+    examples: [
+      {
+        title: "Numbers, ascending",
+        code: `[3, 1, 2].toSorted((a, b) => a - b)`,
+        output: "[1, 2, 3]",
+        note: "Always pass a comparator for numbers — without one they sort as strings.",
+      },
+      {
+        title: "Numbers, descending",
+        code: `[3, 1, 2].toSorted((a, b) => b - a)`,
+        output: "[3, 2, 1]",
+        note: "Flip the subtraction (b - a) to reverse the order.",
+      },
+      {
+        title: "Strings, A→Z",
+        code: `["pear", "apple", "fig"].toSorted()`,
+        output: `["apple", "fig", "pear"]`,
+        note: "For plain strings the default lexicographic sort is fine — no comparator needed.",
+      },
+      {
+        title: "Objects, by a field",
+        code: `const users = [{ name: "Ana", age: 30 }, { name: "Bo", age: 22 }];
+users.toSorted((a, b) => a.age - b.age);`,
+        output: `[{ Bo, 22 }, { Ana, 30 }]`,
+        note: "Compare the field you care about. `users` stays untouched — that's the toSorted promise.",
+      },
+    ],
     practiceTask:
       "Implement myToSorted(arr, cmp) that returns a NEW sorted array without mutating the input.",
     practiceStarter: `function myToSorted(arr, cmp) {
@@ -174,6 +201,29 @@ console.log(nums, sorted);`,
       code: `const a = [1, 2, 3];
 const r = a.toReversed(); // [3, 2, 1], a unchanged`,
     },
+    mentalModel:
+      "Like flipping a photocopy of the list end-to-end — the order reverses on the copy, the original stays put.",
+    examples: [
+      {
+        title: "Reverse numbers",
+        code: `[1, 2, 3].toReversed()`,
+        output: "[3, 2, 1]",
+        note: "A new array; the original is untouched (unlike .reverse(), which mutates).",
+      },
+      {
+        title: "Reverse the characters of a string",
+        code: `[...'abc'].toReversed().join('')`,
+        output: `"cba"`,
+        note: "Spread the string into an array of chars first, then join back.",
+      },
+      {
+        title: "Newest-first list",
+        code: `const posts = ['old', 'mid', 'new'];
+posts.toReversed();`,
+        output: `['new', 'mid', 'old']`,
+        note: "A common UI move: store oldest-first, show newest-first without mutating state.",
+      },
+    ],
     practiceTask: "Implement myToReversed(arr) returning a new reversed array (no mutation).",
     practiceStarter: `function myToReversed(arr) {
   // build a new array in reverse order
@@ -233,6 +283,28 @@ const r = a.toReversed(); // [3, 2, 1], a unchanged`,
       code: `const a = [1, 2, 3];
 const b = a.with(1, 99); // [1, 99, 3], a unchanged`,
     },
+    mentalModel:
+      "Hand back a fresh copy of the list with exactly one slot swapped — the original array is never edited.",
+    examples: [
+      {
+        title: "Replace by index",
+        code: `[1, 2, 3].with(1, 99)`,
+        output: "[1, 99, 3]",
+        note: "Index 1 becomes 99; a new array comes back.",
+      },
+      {
+        title: "Count from the end",
+        code: `[1, 2, 3].with(-1, 9)`,
+        output: "[1, 2, 9]",
+        note: "Negative indices count from the end — -1 is the last item.",
+      },
+      {
+        title: "Immutable update in React state",
+        code: `// mark item i done, without mutating state
+setItems(items.with(i, { ...items[i], done: true }));`,
+        note: "Returns a new array, so React sees a fresh reference and re-renders correctly.",
+      },
+    ],
     practiceTask: "Implement myWith(arr, index, value) returning a new array with that index replaced.",
     practiceStarter: `function myWith(arr, index, value) {
   // copy, then replace one element immutably
@@ -299,6 +371,28 @@ const b = a.with(1, 99); // [1, 99, 3], a unchanged`,
       code: `const a = [1, 2, 3, 4];
 const b = a.toSpliced(1, 2, 99); // [1, 99, 4], a unchanged`,
     },
+    mentalModel:
+      "splice() with the mutation removed: same (start, deleteCount, ...itemsToInsert) recipe, but you get a new array back.",
+    examples: [
+      {
+        title: "Remove items",
+        code: `[1, 2, 3, 4].toSpliced(1, 2)`,
+        output: "[1, 4]",
+        note: "From index 1, delete 2 items. Nothing inserted.",
+      },
+      {
+        title: "Insert without removing",
+        code: `[1, 2, 3].toSpliced(1, 0, 'x')`,
+        output: `[1, 'x', 2, 3]`,
+        note: "deleteCount 0 = pure insert at the position.",
+      },
+      {
+        title: "Replace a range",
+        code: `[1, 2, 3, 4].toSpliced(1, 2, 99)`,
+        output: "[1, 99, 4]",
+        note: "Delete 2 from index 1, insert 99 in their place.",
+      },
+    ],
     practiceTask:
       "Implement myToSpliced(arr, start, deleteCount, ...items) returning a new array (no mutation).",
     practiceStarter: `function myToSpliced(arr, start, deleteCount, ...items) {
@@ -366,6 +460,31 @@ const b = a.toSpliced(1, 2, 99); // [1, 99, 4], a unchanged`,
 nums.findLast(n => n === 5);      // 5 (the last one)
 nums.findLastIndex(n => n === 5); // 3`,
     },
+    mentalModel:
+      "Just like find(), but it walks the array from the END — it returns the first match going backwards.",
+    examples: [
+      {
+        title: "Last matching value",
+        code: `[1, 5, 2, 5, 3].findLast(n => n === 5)`,
+        output: "5",
+        note: "Scans from the right; returns the value (or undefined if none match).",
+      },
+      {
+        title: "Last matching index",
+        code: `[1, 5, 2, 5, 3].findLastIndex(n => n === 5)`,
+        output: "3",
+        note: "Same scan, but gives the index (-1 if none).",
+      },
+      {
+        title: "Most recent matching record",
+        code: `const logs = [
+  { level: 'info' }, { level: 'error' }, { level: 'info' },
+];
+logs.findLast(l => l.level === 'error');`,
+        output: `{ level: 'error' }`,
+        note: "Perfect for 'the latest X' — no need to reverse the array first.",
+      },
+    ],
     practiceTask:
       "Implement myFindLast(arr, predicate) returning the LAST element matching predicate, or undefined.",
     practiceStarter: `function myFindLast(arr, predicate) {

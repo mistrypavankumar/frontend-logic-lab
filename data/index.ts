@@ -2,7 +2,8 @@
 // arrays the app consumes. Add new data files here and the whole app picks
 // them up. Pages should import from "@/data" — not the individual files.
 
-import { Lesson, Challenge, LessonCategory } from "@/lib/types";
+import { Lesson, Challenge, LessonCategory, Article } from "@/lib/types";
+import { articles } from "./articles";
 
 // --- lessons ---
 import { lessons as coreLessons } from "./lessons";
@@ -20,6 +21,8 @@ import { stringChallenges } from "./challenges.strings";
 import { asyncChallenges } from "./challenges.async";
 import { industrialChallenges } from "./challenges.industrial";
 import { debugChallenges } from "./challenges.debug";
+import { aiReviewChallenges } from "./challenges.ai-review";
+import { testWritingChallenges } from "./challenges.test-writing";
 
 export const allLessons: Lesson[] = [
   ...coreLessons,
@@ -38,12 +41,16 @@ export const allChallenges: Challenge[] = [
   ...asyncChallenges,
   ...industrialChallenges,
   ...debugChallenges,
+  ...aiReviewChallenges,
+  ...testWritingChallenges,
 ];
 
 // --- ordered / filtered views ---
 export const orderedLessons = [...allLessons].sort((a, b) => a.order - b.order);
 export const modernMethodLessons = orderedLessons.filter((l) => l.isModernMethod);
 export const debugChallengeList = allChallenges.filter((c) => c.isDebugChallenge);
+export const aiReviewList = allChallenges.filter((c) => c.isAiReview);
+export const testWritingList = allChallenges.filter((c) => c.isTestWriting);
 export const internalsLessonList = orderedLessons.filter(
   (l) => l.category === "JavaScript Internals"
 );
@@ -52,8 +59,21 @@ export const internalsLessonList = orderedLessons.filter(
 export function getLesson(slug: string): Lesson | undefined {
   return allLessons.find((l) => l.slug === slug);
 }
+export function getLessonById(id: string): Lesson | undefined {
+  return allLessons.find((l) => l.id === id);
+}
 export function getChallenge(slug: string): Challenge | undefined {
   return allChallenges.find((c) => c.slug === slug);
+}
+/** Look up a challenge by id (used by lesson → "drill this concept" links). */
+export function getChallengeById(id: string): Challenge | undefined {
+  return allChallenges.find((c) => c.id === id);
+}
+
+// --- articles (Reading Room) ---
+export const allArticles: Article[] = articles;
+export function getArticle(slug: string): Article | undefined {
+  return allArticles.find((a) => a.slug === slug);
 }
 
 // --- derived filter options ---

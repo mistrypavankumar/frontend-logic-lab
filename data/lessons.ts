@@ -326,6 +326,40 @@ console.log(add(2, 3)); // 5
 const double = (n) => n * 2;
 console.log(double(5)); // 10`,
     },
+    examples: [
+      {
+        title: "Function declaration",
+        code: `function greet(name) {
+  return "Hi " + name;
+}
+greet("Ana");`,
+        output: `"Hi Ana"`,
+        note: "The classic form. return sends a value back to whoever called it.",
+      },
+      {
+        title: "Arrow function",
+        code: `const greet = (name) => "Hi " + name;
+greet("Ana");`,
+        output: `"Hi Ana"`,
+        note: "Shorter syntax — a single expression is returned automatically (no braces, no return).",
+      },
+      {
+        title: "Default parameter",
+        code: `function greet(name = "there") {
+  return "Hi " + name;
+}
+greet();`,
+        output: `"Hi there"`,
+        note: "Defaults fill in when an argument is missing.",
+      },
+      {
+        title: "Two inputs, one output",
+        code: `const area = (w, h) => w * h;
+area(4, 3);`,
+        output: "12",
+        note: "Same idea with two inputs. A function is just: inputs → work → output.",
+      },
+    ],
     practiceTask:
       "Write a function getDiscount(price) that returns the price after a 10% discount.",
     practiceStarter: `function getDiscount(price) {
