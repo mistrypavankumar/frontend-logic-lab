@@ -445,6 +445,26 @@ export interface Article {
   takeaways: string[];
 }
 
+// ---------------------------------------------------------------------------
+// DSA topic — teaches a pattern (the "concept") and links to the interview
+// problems that drill it. Problems themselves are regular Challenges.
+// ---------------------------------------------------------------------------
+
+export interface DsaTopic {
+  slug: string;
+  name: string;
+  icon: string;
+  /** The core idea of the pattern, in plain language. */
+  idea: string;
+  /** How to RECOGNIZE a problem that wants this pattern. */
+  whenToUse: string;
+  mentalModel: string;
+  /** Typical complexity this pattern achieves. */
+  complexity: string;
+  /** Slugs of the challenges that drill this topic. */
+  problemSlugs: string[];
+}
+
 /** A larger build-it-yourself project idea. */
 export interface Project {
   id: string;

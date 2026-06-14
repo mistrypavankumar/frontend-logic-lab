@@ -2,8 +2,9 @@
 // arrays the app consumes. Add new data files here and the whole app picks
 // them up. Pages should import from "@/data" — not the individual files.
 
-import { Lesson, Challenge, LessonCategory, Article } from "@/lib/types";
+import { Lesson, Challenge, LessonCategory, Article, DsaTopic } from "@/lib/types";
 import { articles } from "./articles";
+import { dsaTopics } from "./dsa";
 
 // --- lessons ---
 import { lessons as coreLessons } from "./lessons";
@@ -23,6 +24,8 @@ import { industrialChallenges } from "./challenges.industrial";
 import { debugChallenges } from "./challenges.debug";
 import { aiReviewChallenges } from "./challenges.ai-review";
 import { testWritingChallenges } from "./challenges.test-writing";
+import { dsaChallenges } from "./challenges.dsa";
+import { dsaChallenges2 } from "./challenges.dsa-2";
 
 export const allLessons: Lesson[] = [
   ...coreLessons,
@@ -43,6 +46,8 @@ export const allChallenges: Challenge[] = [
   ...debugChallenges,
   ...aiReviewChallenges,
   ...testWritingChallenges,
+  ...dsaChallenges,
+  ...dsaChallenges2,
 ];
 
 // --- ordered / filtered views ---
@@ -75,6 +80,10 @@ export const allArticles: Article[] = articles;
 export function getArticle(slug: string): Article | undefined {
   return allArticles.find((a) => a.slug === slug);
 }
+
+// --- DSA ---
+export const allDsaTopics: DsaTopic[] = dsaTopics;
+export const dsaChallengeList: Challenge[] = dsaChallenges;
 
 // --- derived filter options ---
 export const lessonCategories: LessonCategory[] = Array.from(
