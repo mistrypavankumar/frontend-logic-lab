@@ -27,21 +27,28 @@ a.union(b);        // {1,2,3,4}
 a.intersection(b); // {2,3}`,
     },
     practiceTask:
-      "Implement intersect(a, b) (arrays) returning the values present in BOTH, no duplicates, order from a.",
-    practiceStarter: `function intersect(a, b) {
-  // values in both arrays, deduped
+      "Two teammates each tagged an article. Write sharedTags(mine, theirs) that returns the tags appearing in BOTH lists — deduped, in the order they appear in mine.",
+    practiceStarter: `function sharedTags(mine, theirs) {
+  // tags in both lists, deduped, order from mine
 }`,
     practiceTests: [
-      { name: "common values", kind: "normal", call: "intersect([1,2,3],[2,3,4])", expected: [2, 3] },
-      { name: "no overlap", kind: "normal", call: "intersect([1],[2])", expected: [] },
-      { name: "dedupes", kind: "duplicate", call: "intersect([2,2,3],[2,3])", expected: [2, 3] },
+      { name: "tags in both", kind: "normal", call: "sharedTags(['js','css','html'],['css','html','go'])", expected: ["css", "html"] },
+      { name: "no overlap", kind: "normal", call: "sharedTags(['js'],['go'])", expected: [] },
+      { name: "dedupes", kind: "duplicate", call: "sharedTags(['css','css','js'],['css','js'])", expected: ["css", "js"] },
     ],
-    hint: "Put b in a Set for O(1) lookups, then filter a's unique values by set.has.",
+    builtInPractice: {
+      starter: `function sharedTags(mine, theirs) {
+  // return [...new Set(mine).intersection(new Set(theirs))]
+}`,
+      mustUse: [".intersection("],
+      intro: "Build Sets and let the native Set method do the overlap.",
+    },
+    hint: "New way: [...new Set(mine).intersection(new Set(theirs))]. Manual way (no .intersection): put theirs in a Set, then filter mine's unique values by set.has.",
     solution: {
       language: "ts",
-      code: `function intersect(a, b) {
-  const setB = new Set(b);
-  return [...new Set(a)].filter((x) => setB.has(x));
+      code: `function sharedTags(mine, theirs) {
+  const setTheirs = new Set(theirs);
+  return [...new Set(mine)].filter((x) => setTheirs.has(x));
 }`,
     },
     explanation:
@@ -90,21 +97,28 @@ a.difference(b);          // {1}
 a.symmetricDifference(b); // {1, 4}`,
     },
     practiceTask:
-      "Implement difference(a, b) (arrays) returning a's unique values that are NOT in b.",
-    practiceStarter: `function difference(a, b) {
-  // values in a but not in b, deduped
+      "A user's permissions changed. Write revoked(before, after) that returns the permissions that were in `before` but are NOT in `after` — deduped, in the order they appear in before.",
+    practiceStarter: `function revoked(before, after) {
+  // values in before but not in after, deduped
 }`,
     practiceTests: [
-      { name: "a minus b", kind: "normal", call: "difference([1,2,3],[2,3,4])", expected: [1] },
-      { name: "all removed", kind: "normal", call: "difference([1,2],[1,2])", expected: [] },
-      { name: "b empty", kind: "empty", call: "difference([1,2],[])", expected: [1, 2] },
+      { name: "what was removed", kind: "normal", call: "revoked(['read','write','admin'],['read','write'])", expected: ["admin"] },
+      { name: "nothing removed", kind: "normal", call: "revoked(['read','write'],['read','write'])", expected: [] },
+      { name: "after is empty", kind: "empty", call: "revoked(['read','write'],[])", expected: ["read", "write"] },
     ],
-    hint: "Set of b, then filter a's unique values where !setB.has(x).",
+    builtInPractice: {
+      starter: `function revoked(before, after) {
+  // return [...new Set(before).difference(new Set(after))]
+}`,
+      mustUse: [".difference("],
+      intro: "Build Sets and subtract one from the other with the native method.",
+    },
+    hint: "New way: [...new Set(before).difference(new Set(after))]. Manual way (no .difference): put after in a Set, then filter before's unique values where !set.has(x).",
     solution: {
       language: "ts",
-      code: `function difference(a, b) {
-  const setB = new Set(b);
-  return [...new Set(a)].filter((x) => !setB.has(x));
+      code: `function revoked(before, after) {
+  const setAfter = new Set(after);
+  return [...new Set(before)].filter((x) => !setAfter.has(x));
 }`,
     },
     explanation:
@@ -157,21 +171,28 @@ const user = new Set(['read', 'write', 'admin']);
 required.isSubsetOf(user); // true → access granted`,
     },
     practiceTask:
-      "Implement isSubsetOf(a, b) (arrays) → true if every value of a is in b.",
-    practiceStarter: `function isSubsetOf(a, b) {
-  // every value of a is also in b?
+      "A route requires certain permissions. Write hasAccess(required, granted) that returns true only if EVERY required permission is in the granted list.",
+    practiceStarter: `function hasAccess(required, granted) {
+  // true only if every required permission is in granted
 }`,
     practiceTests: [
-      { name: "is subset", kind: "normal", call: "isSubsetOf([1,2],[1,2,3])", expected: true },
-      { name: "not subset", kind: "normal", call: "isSubsetOf([1,4],[1,2,3])", expected: false },
-      { name: "empty is subset of anything", kind: "empty", call: "isSubsetOf([],[1])", expected: true },
+      { name: "has all required", kind: "normal", call: "hasAccess(['read','write'],['read','write','admin'])", expected: true },
+      { name: "missing one", kind: "normal", call: "hasAccess(['read','delete'],['read','write'])", expected: false },
+      { name: "nothing required", kind: "empty", call: "hasAccess([],['read'])", expected: true },
     ],
-    hint: "Set of b, then a.every(x => setB.has(x)).",
+    builtInPractice: {
+      starter: `function hasAccess(required, granted) {
+  // return new Set(required).isSubsetOf(new Set(granted))
+}`,
+      mustUse: [".isSubsetOf("],
+      intro: "Express the check as a Set relationship — required ⊆ granted.",
+    },
+    hint: "New way: new Set(required).isSubsetOf(new Set(granted)). Manual way (no .isSubsetOf): put granted in a Set, then required.every(p => set.has(p)).",
     solution: {
       language: "ts",
-      code: `function isSubsetOf(a, b) {
-  const setB = new Set(b);
-  return a.every((x) => setB.has(x));
+      code: `function hasAccess(required, granted) {
+  const grantedSet = new Set(granted);
+  return required.every((p) => grantedSet.has(p));
 }`,
     },
     explanation:

@@ -25,28 +25,38 @@ Object.groupBy(orders, o => o.status);
 // { paid: [{id:1..},{id:3..}], open: [{id:2..}] }`,
     },
     practiceTask:
-      "Implement myGroupBy(items, keyFn) returning { key: items[] }. Use a plain object as the accumulator.",
-    practiceStarter: `function myGroupBy(items, keyFn) {
-  // bucket each item under keyFn(item)
+      "An online store has products shaped like { name, category }. Write groupByCategory(products) that returns an object mapping each category to the array of products in it.",
+    practiceStarter: `function groupByCategory(products) {
+  // bucket each product under its category
 }`,
     practiceTests: [
       {
-        name: "groups by status",
+        name: "buckets by category",
         kind: "normal",
-        call: "myGroupBy([{s:'a'},{s:'b'},{s:'a'}], x => x.s)",
-        expected: { a: [{ s: "a" }, { s: "a" }], b: [{ s: "b" }] },
+        call: "groupByCategory([{name:'Apple',category:'fruit'},{name:'Milk',category:'dairy'},{name:'Pear',category:'fruit'}])",
+        expected: {
+          fruit: [{ name: "Apple", category: "fruit" }, { name: "Pear", category: "fruit" }],
+          dairy: [{ name: "Milk", category: "dairy" }],
+        },
       },
-      { name: "empty input", kind: "empty", call: "myGroupBy([], x => x)", expected: {} },
+      { name: "empty input", kind: "empty", call: "groupByCategory([])", expected: {} },
     ],
-    hint: "reduce into {}. For each item compute the key, create the array if missing, then push.",
+    builtInPractice: {
+      starter: `function groupByCategory(products) {
+  // return Object.groupBy(products, p => p.category)
+}`,
+      mustUse: ["Object.groupBy("],
+      intro: "Bucket the list with the built-in in one call.",
+    },
+    hint: "New way: Object.groupBy(products, p => p.category). Manual way: loop (or reduce) into {}, creating each category's array on first sight, then pushing.",
     solution: {
       language: "ts",
-      code: `function myGroupBy(items, keyFn) {
-  return items.reduce((acc, item) => {
-    const key = keyFn(item);
-    (acc[key] ||= []).push(item);
-    return acc;
-  }, {});
+      code: `function groupByCategory(products) {
+  const out = {};
+  for (const p of products) {
+    (out[p.category] ||= []).push(p);
+  }
+  return out;
 }`,
     },
     explanation:
@@ -112,30 +122,38 @@ const g = Map.groupBy(items, x => x.n % 2 === 0 ? 'even' : 'odd');
 g.get('odd'); // [{n:1},{n:3}]`,
     },
     practiceTask:
-      "Implement myMapGroupBy(items, keyFn) returning a Map of key -> items[].",
-    practiceStarter: `function myMapGroupBy(items, keyFn) {
-  // use a Map so keys can be any type
+      "You have a list of names. Write groupByInitial(names) that returns a Map from each first letter to the array of names starting with it.",
+    practiceStarter: `function groupByInitial(names) {
+  // use a Map keyed by each name's first letter
 }`,
     practiceTests: [
       {
-        name: "groups into a Map",
+        name: "groups by first letter",
         kind: "normal",
-        call: "[...myMapGroupBy([1,2,3,4], n => n % 2).entries()]",
+        call: "[...groupByInitial(['Ann','Bob','Amy']).entries()]",
         expected: [
-          [1, [1, 3]],
-          [0, [2, 4]],
+          ["A", ["Ann", "Amy"]],
+          ["B", ["Bob"]],
         ],
       },
+      { name: "empty input", kind: "empty", call: "[...groupByInitial([]).entries()]", expected: [] },
     ],
-    hint: "Create a Map. For each item, get-or-create the array via map.get(key) ?? [], push, then map.set.",
+    builtInPractice: {
+      starter: `function groupByInitial(names) {
+  // return Map.groupBy(names, n => n[0])
+}`,
+      mustUse: ["Map.groupBy("],
+      intro: "Bucket into a Map with the built-in in one call.",
+    },
+    hint: "New way: Map.groupBy(names, n => n[0]). Manual way: make a Map; for each name get-or-create the array for n[0], then push.",
     solution: {
       language: "ts",
-      code: `function myMapGroupBy(items, keyFn) {
+      code: `function groupByInitial(names) {
   const map = new Map();
-  for (const item of items) {
-    const key = keyFn(item);
+  for (const n of names) {
+    const key = n[0];
     if (!map.has(key)) map.set(key, []);
-    map.get(key).push(item);
+    map.get(key).push(n);
   }
   return map;
 }`,
@@ -192,20 +210,27 @@ Object.hasOwn(user, 'name'); // true
 Object.hasOwn(user, 'toString'); // false (inherited)`,
     },
     practiceTask:
-      "Implement myHasOwn(obj, key) returning true only for the object's own keys (not inherited ones).",
-    practiceStarter: `function myHasOwn(obj, key) {
-  // check OWN property only
+      "A settings object may or may not define a key itself. Write hasSetting(settings, key) that returns true only if settings has its OWN property named key — not one inherited from the prototype (like 'toString').",
+    practiceStarter: `function hasSetting(settings, key) {
+  // true only for settings' OWN key (not inherited)
 }`,
     practiceTests: [
-      { name: "own key", kind: "normal", call: "myHasOwn({a:1}, 'a')", expected: true },
-      { name: "missing key", kind: "normal", call: "myHasOwn({a:1}, 'b')", expected: false },
-      { name: "inherited key is not own", kind: "normal", call: "myHasOwn({}, 'toString')", expected: false },
+      { name: "own key", kind: "normal", call: "hasSetting({theme:'dark'}, 'theme')", expected: true },
+      { name: "missing key", kind: "normal", call: "hasSetting({theme:'dark'}, 'lang')", expected: false },
+      { name: "inherited key is not own", kind: "normal", call: "hasSetting({}, 'toString')", expected: false },
     ],
-    hint: "Use Object.prototype.hasOwnProperty.call(obj, key) — calling it safely off the prototype.",
+    builtInPractice: {
+      starter: `function hasSetting(settings, key) {
+  // return Object.hasOwn(settings, key)
+}`,
+      mustUse: ["Object.hasOwn("],
+      intro: "Use the safe modern check.",
+    },
+    hint: "New way: Object.hasOwn(settings, key). Manual way (no Object.hasOwn): Object.prototype.hasOwnProperty.call(settings, key) — calling it safely off the prototype.",
     solution: {
       language: "ts",
-      code: `function myHasOwn(obj, key) {
-  return Object.prototype.hasOwnProperty.call(obj, key);
+      code: `function hasSetting(settings, key) {
+  return Object.prototype.hasOwnProperty.call(settings, key);
 }`,
     },
     explanation:
@@ -254,21 +279,33 @@ const doubled = Object.fromEntries(
 ); // { a: 20, b: 40 }`,
     },
     practiceTask:
-      "Implement mapValues(obj, fn) that returns a new object with fn applied to each value (keys unchanged).",
-    practiceStarter: `function mapValues(obj, fn) {
-  // transform each value, keep keys
+      "Scores are stored as an object like { alice: 10, bob: 20 }. Write addBonus(scores, bonus) that returns a NEW object with bonus added to every score (keys unchanged).",
+    practiceStarter: `function addBonus(scores, bonus) {
+  // return a new object: each value increased by bonus, same keys
 }`,
     practiceTests: [
-      { name: "doubles values", kind: "normal", call: "mapValues({a:1,b:2}, v => v * 2)", expected: { a: 2, b: 4 } },
-      { name: "empty object", kind: "empty", call: "mapValues({}, v => v)", expected: {} },
+      { name: "adds the bonus", kind: "normal", call: "addBonus({alice:10, bob:20}, 5)", expected: { alice: 15, bob: 25 } },
+      { name: "zero bonus", kind: "normal", call: "addBonus({x:1}, 0)", expected: { x: 1 } },
+      { name: "empty object", kind: "empty", call: "addBonus({}, 5)", expected: {} },
     ],
-    hint: "Object.entries(obj) → .map(([k, v]) => [k, fn(v)]) → Object.fromEntries(...).",
+    builtInPractice: {
+      starter: `function addBonus(scores, bonus) {
+  // return Object.fromEntries(
+  //   Object.entries(scores).map(([k, v]) => [k, v + bonus])
+  // )
+}`,
+      mustUse: ["Object.fromEntries("],
+      intro: "Round-trip through entries: object → pairs → transform → back to object.",
+    },
+    hint: "New way: Object.fromEntries(Object.entries(scores).map(([k, v]) => [k, v + bonus])). Manual way (no fromEntries): loop Object.entries and assign each k to v + bonus on a new object.",
     solution: {
       language: "ts",
-      code: `function mapValues(obj, fn) {
-  return Object.fromEntries(
-    Object.entries(obj).map(([k, v]) => [k, fn(v)])
-  );
+      code: `function addBonus(scores, bonus) {
+  const out = {};
+  for (const [k, v] of Object.entries(scores)) {
+    out[k] = v + bonus;
+  }
+  return out;
 }`,
     },
     explanation:
@@ -322,28 +359,35 @@ b.user.tags.push('y');
 // a.user.tags is still ['x'] — fully independent`,
     },
     practiceTask:
-      "Implement deepClone(value) for plain objects/arrays (recursively copy). Handle nested structures.",
-    practiceStarter: `function deepClone(value) {
-  // recursively clone objects and arrays
+      "Before a user edits a draft you take a snapshot for undo. Write snapshot(draft) that returns a DEEP copy of the (nested, JSON-safe) draft object, so editing the copy never changes the original.",
+    practiceStarter: `function snapshot(draft) {
+  // return a fully independent deep copy of draft
 }`,
     practiceTests: [
-      { name: "clones nested", kind: "normal", call: "deepClone({a:{b:1}})", expected: { a: { b: 1 } } },
+      { name: "copies nested data", kind: "normal", call: "snapshot({title:'A', meta:{tags:['x']}})", expected: { title: "A", meta: { tags: ["x"] } } },
       {
         name: "no shared reference",
         kind: "mutation",
-        call: "(()=>{const o={a:{b:1}};const c=deepClone(o);c.a.b=99;return o.a.b;})()",
-        expected: 1,
+        call: "(()=>{const d={meta:{tags:['x']}};const c=snapshot(d);c.meta.tags.push('y');return d.meta.tags;})()",
+        expected: ["x"],
       },
-      { name: "clones arrays", kind: "normal", call: "deepClone([1,[2,3]])", expected: [1, [2, 3]] },
+      { name: "clones arrays", kind: "normal", call: "snapshot([1,[2,3]])", expected: [1, [2, 3]] },
     ],
-    hint: "If value isn't an object, return it. Otherwise recurse over keys/elements building a new object/array.",
+    builtInPractice: {
+      starter: `function snapshot(draft) {
+  // return structuredClone(draft)
+}`,
+      mustUse: ["structuredClone("],
+      intro: "One call gives a true deep copy — nested objects and arrays included.",
+    },
+    hint: "New way: structuredClone(draft). Manual way (no structuredClone): recurse — if it's not an object return it; arrays map() each element through the clone; objects copy each key through the clone.",
     solution: {
       language: "ts",
-      code: `function deepClone(value) {
-  if (value === null || typeof value !== 'object') return value;
-  if (Array.isArray(value)) return value.map(deepClone);
+      code: `function snapshot(draft) {
+  if (draft === null || typeof draft !== 'object') return draft;
+  if (Array.isArray(draft)) return draft.map(snapshot);
   const out = {};
-  for (const k of Object.keys(value)) out[k] = deepClone(value[k]);
+  for (const k of Object.keys(draft)) out[k] = snapshot(draft[k]);
   return out;
 }`,
     },

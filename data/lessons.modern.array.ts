@@ -53,22 +53,27 @@ users.toSorted((a, b) => a.age - b.age);`,
       },
     ],
     practiceTask:
-      "Implement myToSorted(arr, cmp) that returns a NEW sorted array without mutating the input.",
-    practiceStarter: `function myToSorted(arr, cmp) {
-  // copy first, then sort the copy
+      "A scoreboard keeps player scores in React state. Write ranked(scores) that returns a NEW array sorted highest-first, leaving the original state array untouched.",
+    practiceStarter: `function ranked(scores) {
+  // return a NEW array sorted highest-first; don't mutate scores
 }`,
     practiceTests: [
-      { name: "sorts ascending", kind: "normal", call: "myToSorted([3,1,2],(a,b)=>a-b)", expected: [1, 2, 3] },
-      { name: "does not mutate input", kind: "mutation", call: "(()=>{const a=[3,1,2];myToSorted(a,(x,y)=>x-y);return a;})()", expected: [3, 1, 2] },
-      { name: "empty array", kind: "empty", call: "myToSorted([],(a,b)=>a-b)", expected: [] },
+      { name: "highest first", kind: "normal", call: "ranked([30, 10, 20])", expected: [30, 20, 10] },
+      { name: "does not mutate state", kind: "mutation", call: "(()=>{const s=[30,10,20];ranked(s);return s;})()", expected: [30, 10, 20] },
+      { name: "empty scoreboard", kind: "empty", call: "ranked([])", expected: [] },
     ],
-    hint: "Use arr.slice() (or [...arr]) to copy, then call .sort(cmp) on the copy.",
+    builtInPractice: {
+      starter: `function ranked(scores) {
+  // return scores.toSorted(...) sorted highest-first
+}`,
+      mustUse: [".toSorted("],
+      intro: "Use the new immutable method — it sorts a copy, so state stays intact.",
+    },
+    hint: "Sort descending with (a, b) => b - a. New way: scores.toSorted((a,b)=>b-a). Older way (no toSorted): [...scores].sort((a,b)=>b-a).",
     solution: {
       language: "ts",
-      code: `function myToSorted(arr, cmp) {
-  const copy = arr.slice();
-  copy.sort(cmp);
-  return copy;
+      code: `function ranked(scores) {
+  return [...scores].sort((a, b) => b - a);
 }`,
     },
     explanation:
@@ -224,20 +229,28 @@ posts.toReversed();`,
         note: "A common UI move: store oldest-first, show newest-first without mutating state.",
       },
     ],
-    practiceTask: "Implement myToReversed(arr) returning a new reversed array (no mutation).",
-    practiceStarter: `function myToReversed(arr) {
-  // build a new array in reverse order
+    practiceTask:
+      "A carousel shows slides in reverse for a right-to-left layout. Write rtlOrder(slides) that returns a NEW reversed array, leaving the original slides array unchanged.",
+    practiceStarter: `function rtlOrder(slides) {
+  // return a NEW reversed array; don't mutate slides
 }`,
     practiceTests: [
-      { name: "reverses", kind: "normal", call: "myToReversed([1,2,3])", expected: [3, 2, 1] },
-      { name: "no mutation", kind: "mutation", call: "(()=>{const a=[1,2,3];myToReversed(a);return a;})()", expected: [1, 2, 3] },
-      { name: "empty", kind: "empty", call: "myToReversed([])", expected: [] },
+      { name: "reverses order", kind: "normal", call: "rtlOrder(['a','b','c'])", expected: ["c", "b", "a"] },
+      { name: "does not mutate input", kind: "mutation", call: "(()=>{const s=['a','b','c'];rtlOrder(s);return s;})()", expected: ["a", "b", "c"] },
+      { name: "empty", kind: "empty", call: "rtlOrder([])", expected: [] },
     ],
-    hint: "Copy with slice() then .reverse(), or loop from the end pushing into a new array.",
+    builtInPractice: {
+      starter: `function rtlOrder(slides) {
+  // return slides.toReversed()
+}`,
+      mustUse: [".toReversed("],
+      intro: "Use the new immutable method — it reverses a copy, leaving the original alone.",
+    },
+    hint: "New way: slides.toReversed(). Older way (no toReversed): [...slides].reverse() — copy first so the original isn't flipped.",
     solution: {
       language: "ts",
-      code: `function myToReversed(arr) {
-  return arr.slice().reverse();
+      code: `function rtlOrder(slides) {
+  return [...slides].reverse();
 }`,
     },
     explanation:
@@ -305,22 +318,28 @@ setItems(items.with(i, { ...items[i], done: true }));`,
         note: "Returns a new array, so React sees a fresh reference and re-renders correctly.",
       },
     ],
-    practiceTask: "Implement myWith(arr, index, value) returning a new array with that index replaced.",
-    practiceStarter: `function myWith(arr, index, value) {
-  // copy, then replace one element immutably
+    practiceTask:
+      "A todo list lives in React state. Write rename(todos, index, newText) that returns a NEW array with the todo at index replaced by newText — without mutating the original.",
+    practiceStarter: `function rename(todos, index, newText) {
+  // return a NEW array with todos[index] replaced; don't mutate todos
 }`,
     practiceTests: [
-      { name: "replaces index", kind: "normal", call: "myWith([1,2,3], 1, 99)", expected: [1, 99, 3] },
-      { name: "no mutation", kind: "mutation", call: "(()=>{const a=[1,2,3];myWith(a,0,9);return a;})()", expected: [1, 2, 3] },
-      { name: "replace first", kind: "normal", call: "myWith(['a','b'], 0, 'x')", expected: ["x", "b"] },
+      { name: "replaces one item", kind: "normal", call: "rename(['buy','cook','eat'], 1, 'bake')", expected: ["buy", "bake", "eat"] },
+      { name: "does not mutate input", kind: "mutation", call: "(()=>{const t=['a','b'];rename(t,0,'x');return t;})()", expected: ["a", "b"] },
+      { name: "replace first", kind: "normal", call: "rename(['a','b'], 0, 'x')", expected: ["x", "b"] },
     ],
-    hint: "Copy the array, then set copy[index] = value, then return the copy.",
+    builtInPractice: {
+      starter: `function rename(todos, index, newText) {
+  // return todos.with(index, newText)
+}`,
+      mustUse: [".with("],
+      intro: "Use the new method — it replaces one slot and returns a fresh array.",
+    },
+    hint: "New way: todos.with(index, newText). Manual way (no with): todos.map((t, i) => i === index ? newText : t).",
     solution: {
       language: "ts",
-      code: `function myWith(arr, index, value) {
-  const copy = arr.slice();
-  copy[index] = value;
-  return copy;
+      code: `function rename(todos, index, newText) {
+  return todos.map((t, i) => (i === index ? newText : t));
 }`,
     },
     explanation:
@@ -394,22 +413,27 @@ const b = a.toSpliced(1, 2, 99); // [1, 99, 4], a unchanged`,
       },
     ],
     practiceTask:
-      "Implement myToSpliced(arr, start, deleteCount, ...items) returning a new array (no mutation).",
-    practiceStarter: `function myToSpliced(arr, start, deleteCount, ...items) {
-  // copy, splice the copy, return it
+      "A playlist lives in React state. Write removeAt(songs, index) that returns a NEW array with the song at index removed — without mutating the original.",
+    practiceStarter: `function removeAt(songs, index) {
+  // return a NEW array with songs[index] removed; don't mutate songs
 }`,
     practiceTests: [
-      { name: "remove + insert", kind: "normal", call: "myToSpliced([1,2,3,4], 1, 2, 99)", expected: [1, 99, 4] },
-      { name: "pure insert", kind: "normal", call: "myToSpliced([1,4], 1, 0, 2, 3)", expected: [1, 2, 3, 4] },
-      { name: "no mutation", kind: "mutation", call: "(()=>{const a=[1,2,3];myToSpliced(a,0,1);return a;})()", expected: [1, 2, 3] },
+      { name: "removes the middle one", kind: "normal", call: "removeAt(['a','b','c'], 1)", expected: ["a", "c"] },
+      { name: "removes the first", kind: "normal", call: "removeAt(['a','b'], 0)", expected: ["b"] },
+      { name: "does not mutate input", kind: "mutation", call: "(()=>{const s=['a','b','c'];removeAt(s,0);return s;})()", expected: ["a", "b", "c"] },
     ],
-    hint: "Copy with slice(), call splice() on the copy (which mutates the copy), then return the copy.",
+    builtInPractice: {
+      starter: `function removeAt(songs, index) {
+  // return songs.toSpliced(index, 1)
+}`,
+      mustUse: [".toSpliced("],
+      intro: "Use the new immutable method — toSpliced(index, 1) removes one item into a fresh array.",
+    },
+    hint: "New way: songs.toSpliced(index, 1). Manual way (no toSpliced): [...songs.slice(0, index), ...songs.slice(index + 1)].",
     solution: {
       language: "ts",
-      code: `function myToSpliced(arr, start, deleteCount, ...items) {
-  const copy = arr.slice();
-  copy.splice(start, deleteCount, ...items);
-  return copy;
+      code: `function removeAt(songs, index) {
+  return [...songs.slice(0, index), ...songs.slice(index + 1)];
 }`,
     },
     explanation:
@@ -486,21 +510,28 @@ logs.findLast(l => l.level === 'error');`,
       },
     ],
     practiceTask:
-      "Implement myFindLast(arr, predicate) returning the LAST element matching predicate, or undefined.",
-    practiceStarter: `function myFindLast(arr, predicate) {
-  // search from the end
+      "An activity log is stored oldest-first, each entry shaped like { action, ok }. Write lastFailure(log) that returns the MOST RECENT entry where ok is false — or undefined if there are none.",
+    practiceStarter: `function lastFailure(log) {
+  // return the last entry with ok === false, or undefined
 }`,
     practiceTests: [
-      { name: "finds last match", kind: "normal", call: "myFindLast([1,5,2,5,3], x => x === 5)", expected: 5 },
-      { name: "returns undefined when none", kind: "normal", call: "myFindLast([1,2,3], x => x > 9)", expected: undefined },
-      { name: "empty array", kind: "empty", call: "myFindLast([], x => true)", expected: undefined },
+      { name: "most recent failure", kind: "normal", call: "lastFailure([{action:'a',ok:true},{action:'b',ok:false},{action:'c',ok:true}])", expected: { action: "b", ok: false } },
+      { name: "no failures", kind: "normal", call: "lastFailure([{action:'a',ok:true}])", expected: undefined },
+      { name: "empty log", kind: "empty", call: "lastFailure([])", expected: undefined },
     ],
-    hint: "Loop from arr.length - 1 down to 0; return the first element where predicate is true.",
+    builtInPractice: {
+      starter: `function lastFailure(log) {
+  // return log.findLast(...) for the last entry with ok === false
+}`,
+      mustUse: [".findLast("],
+      intro: "Use findLast — it scans from the end, so no reversing needed.",
+    },
+    hint: "New way: log.findLast(e => !e.ok). Manual way (no findLast): loop from the last index down to 0 and return the first entry with ok === false.",
     solution: {
       language: "ts",
-      code: `function myFindLast(arr, predicate) {
-  for (let i = arr.length - 1; i >= 0; i--) {
-    if (predicate(arr[i], i, arr)) return arr[i];
+      code: `function lastFailure(log) {
+  for (let i = log.length - 1; i >= 0; i--) {
+    if (!log[i].ok) return log[i];
   }
   return undefined;
 }`,
