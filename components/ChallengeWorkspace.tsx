@@ -66,7 +66,7 @@ export default function ChallengeWorkspace({
     }
     for (const token of forbidUse ?? []) {
       if (stripped.includes(token)) {
-        return `Solve it WITHOUT ${token}…) this time — write the logic by hand with a loop.`;
+        return `Solve it WITHOUT ${token}…) this time — write it yourself the manual way.`;
       }
     }
     return null;

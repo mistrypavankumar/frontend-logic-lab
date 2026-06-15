@@ -237,7 +237,7 @@ export default function LessonView({ lesson }: { lesson: Lesson }) {
                 </li>
                 <li>
                   <span className="font-semibold text-slate-700">Step 2.</span>{" "}
-                  Write the same thing by hand (with a loop), without it.
+                  Write the same thing yourself, the manual way, without it.
                 </li>
                 <li className="text-slate-500">Both steps must pass to complete the lesson.</li>
               </ol>

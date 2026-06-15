@@ -53,7 +53,7 @@ export default function TwoStagePractice({
       unlocked: builtInPassed,
       n: 2,
       title: "Now solve it by hand",
-      sub: `Same tests — but write the logic yourself with a loop, WITHOUT ${mustUse.join(" / ")}…).`,
+      sub: `Same tests — but write it yourself the manual way, WITHOUT ${mustUse.join(" / ")}…).`,
     },
   ];
 
