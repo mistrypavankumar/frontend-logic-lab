@@ -13,6 +13,7 @@ const CATEGORY_ORDER: LessonCategory[] = [
   "CSS",
   "JavaScript",
   "React",
+  "Array Methods",
   "Modern Array Methods",
   "Modern Objects & Grouping",
   "Modern Set Operations",

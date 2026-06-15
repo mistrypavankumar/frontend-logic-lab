@@ -7,6 +7,7 @@ import { Lesson, Challenge } from "@/lib/types";
 import Section from "@/components/Section";
 import CodeBlock from "@/components/CodeBlock";
 import ChallengeWorkspace from "@/components/ChallengeWorkspace";
+import TwoStagePractice from "@/components/TwoStagePractice";
 import SolutionToggle from "@/components/SolutionToggle";
 import DifficultyBadge from "@/components/DifficultyBadge";
 import ComplexityBadge from "@/components/ComplexityBadge";
@@ -26,6 +27,11 @@ import VariableTracker from "@/components/VariableTracker";
 import CommonMistakes from "@/components/CommonMistakes";
 import { Eli5Block } from "@/components/Eli5";
 import { useProgress } from "@/lib/useProgress";
+
+// Turn guard tokens like ".filter(" into readable method names ".filter()".
+function formatMethods(tokens: string[]): string {
+  return tokens.map((t) => (t.endsWith("(") ? t + ")" : t)).join(" / ");
+}
 
 export default function LessonView({ lesson }: { lesson: Lesson }) {
   const {
@@ -212,9 +218,31 @@ export default function LessonView({ lesson }: { lesson: Lesson }) {
         )}
 
         <Section icon="🎯" title="Practice task">
-          <p className="rounded-lg border-l-4 border-brand-500 bg-white p-4 leading-relaxed shadow-sm">
-            {lesson.practiceTask}
-          </p>
+          <div className="rounded-lg border-l-4 border-brand-500 bg-white p-4 leading-relaxed shadow-sm">
+            <p>
+              {lesson.builtInPractice && (
+                <span className="font-semibold text-slate-900">Goal: </span>
+              )}
+              {lesson.practiceTask}
+            </p>
+            {lesson.builtInPractice && (
+              <ol className="mt-3 space-y-1 text-sm text-slate-600">
+                <li>
+                  <span className="font-semibold text-slate-700">Step 1.</span>{" "}
+                  Solve it using the built-in{" "}
+                  <code className="rounded bg-slate-100 px-1 font-mono text-slate-800">
+                    {formatMethods(lesson.builtInPractice.mustUse)}
+                  </code>
+                  .
+                </li>
+                <li>
+                  <span className="font-semibold text-slate-700">Step 2.</span>{" "}
+                  Write the same thing by hand (with a loop), without it.
+                </li>
+                <li className="text-slate-500">Both steps must pass to complete the lesson.</li>
+              </ol>
+            )}
+          </div>
         </Section>
 
         {lesson.fadedExample && (
@@ -223,31 +251,49 @@ export default function LessonView({ lesson }: { lesson: Lesson }) {
           </Section>
         )}
 
-        {lesson.practiceStarter && (
-          <Section icon="⌨️" title="Your code">
-            <ChallengeWorkspace
+        {lesson.builtInPractice && lesson.practiceStarter ? (
+          <Section icon="⌨️" title="Your code — built-in, then by hand">
+            <TwoStagePractice
               key={lesson.id}
-              persistKey={`lesson:${lesson.id}`}
-              starterCode={lesson.practiceStarter}
-              tests={lesson.practiceTests}
-              runnable={lesson.practiceRunnable}
-              notRunnableHint={
-                lesson.category === "React"
-                  ? "Build & run this in your own React project — JSX can't run here yet."
-                  : "Try this in your browser or a sandbox like CodePen to see it render."
-              }
-              onAllPassed={() => {
+              lessonId={lesson.id}
+              builtInStarter={lesson.builtInPractice.starter}
+              builtInTests={lesson.builtInPractice.tests ?? lesson.practiceTests}
+              builtInIntro={lesson.builtInPractice.intro}
+              manualStarter={lesson.practiceStarter}
+              manualTests={lesson.practiceTests}
+              mustUse={lesson.builtInPractice.mustUse}
+              onComplete={() => {
                 if (!isLessonDone(lesson.id)) toggleLesson(lesson.id);
               }}
             />
-            <p className="mt-2 text-sm text-slate-500">
-              {lesson.practiceTests && lesson.practiceTests.length > 0
-                ? "Write your answer above and hit Run — it's checked against test cases."
-                : lesson.practiceRunnable
-                ? "Write your answer above and hit Run to see the console output."
-                : "Edit the starter code to practice writing it yourself."}
-            </p>
           </Section>
+        ) : (
+          lesson.practiceStarter && (
+            <Section icon="⌨️" title="Your code">
+              <ChallengeWorkspace
+                key={lesson.id}
+                persistKey={`lesson:${lesson.id}`}
+                starterCode={lesson.practiceStarter}
+                tests={lesson.practiceTests}
+                runnable={lesson.practiceRunnable}
+                notRunnableHint={
+                  lesson.category === "React"
+                    ? "Build & run this in your own React project — JSX can't run here yet."
+                    : "Try this in your browser or a sandbox like CodePen to see it render."
+                }
+                onAllPassed={() => {
+                  if (!isLessonDone(lesson.id)) toggleLesson(lesson.id);
+                }}
+              />
+              <p className="mt-2 text-sm text-slate-500">
+                {lesson.practiceTests && lesson.practiceTests.length > 0
+                  ? "Write your answer above and hit Run — it's checked against test cases."
+                  : lesson.practiceRunnable
+                  ? "Write your answer above and hit Run to see the console output."
+                  : "Edit the starter code to practice writing it yourself."}
+              </p>
+            </Section>
+          )
         )}
 
         {lesson.predictOutput && lesson.predictOutput.length > 0 && (

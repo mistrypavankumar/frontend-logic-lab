@@ -31,20 +31,46 @@ export default function ChallengeWorkspace({
   onAllPassed,
   onResult,
   persistKey,
+  requireUse,
+  forbidUse,
 }: {
   starterCode: string;
   tests?: TestCase[];
   runnable?: boolean;
   notRunnableHint?: string;
   onAllPassed?: () => void;
-  /** Fired after every graded run with whether all tests passed. */
+  /** Fired after every graded run with whether all tests passed (guard included). */
   onResult?: (allPassed: boolean) => void;
   /** If set, the in-progress code is autosaved/restored under this key. */
   persistKey?: string;
+  /** Code MUST contain every one of these substrings (e.g. [".filter("]). */
+  requireUse?: string[];
+  /** Code must contain NONE of these substrings (forces a by-hand solution). */
+  forbidUse?: string[];
 }) {
   const [code, setCodeRaw] = useState(starterCode);
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
+  const [guardError, setGuardError] = useState<string | null>(null);
+
+  // Strip comments before checking, so a token mentioned in a // comment or a
+  // /* block */ doesn't count as "using" (or violating) the method.
+  const guardCheck = (src: string): string | null => {
+    const stripped = src
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+    for (const token of requireUse ?? []) {
+      if (!stripped.includes(token)) {
+        return `Use the built-in here — your code must call ${token}…). That's the point of this first step.`;
+      }
+    }
+    for (const token of forbidUse ?? []) {
+      if (stripped.includes(token)) {
+        return `Solve it WITHOUT ${token}…) this time — write the logic by hand with a loop.`;
+      }
+    }
+    return null;
+  };
 
   // Restore any in-progress code on mount (after hydration → no mismatch).
   useEffect(() => {
@@ -78,10 +104,13 @@ export default function ChallengeWorkspace({
   const run = async () => {
     setRunning(true);
     try {
+      const gErr = guardCheck(code);
+      setGuardError(gErr);
       const r = await runChallenge(code, tests ?? []);
       setResult(r);
-      const allPassed =
+      const testsPassed =
         hasTests && r.cases.length > 0 && r.cases.every((c) => c.passed) && !r.fatalError;
+      const allPassed = testsPassed && !gErr;
       if (hasTests) onResult?.(allPassed);
       if (allPassed) onAllPassed?.();
     } finally {
@@ -92,14 +121,16 @@ export default function ChallengeWorkspace({
   const reset = () => {
     setCode(starterCode);
     setResult(null);
+    setGuardError(null);
   };
 
   const passedCount = result?.cases.filter((c) => c.passed).length ?? 0;
-  const allPassed =
+  const testsAllPassed =
     !!result &&
     !result.fatalError &&
     result.cases.length > 0 &&
     passedCount === result.cases.length;
+  const allPassed = testsAllPassed && !guardError;
 
   return (
     <div className="space-y-3">
@@ -134,6 +165,8 @@ export default function ChallengeWorkspace({
           >
             {allPassed
               ? "🎉 All tests passed!"
+              : testsAllPassed && guardError
+              ? "Almost — wrong approach"
               : `${passedCount}/${result.cases.length} passed`}
           </span>
         )}
@@ -142,6 +175,14 @@ export default function ChallengeWorkspace({
       {/* Results */}
       {result && (
         <div className="space-y-2">
+          {/* Approach guard: tests pass but the required/forbidden method rule isn't met */}
+          {guardError && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <span className="font-semibold">✋ {testsAllPassed ? "Tests pass, but: " : ""}</span>
+              {guardError}
+            </div>
+          )}
+
           {result.fatalError && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
               <span className="font-semibold">Error: </span>
