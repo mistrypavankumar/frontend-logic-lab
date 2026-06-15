@@ -9,6 +9,7 @@ import { pathStages } from "./path";
 
 // --- lessons ---
 import { lessons as coreLessons } from "./lessons";
+import { arrayMethodLessons } from "./lessons.array";
 import { modernArrayLessons } from "./lessons.modern.array";
 import { modernObjectLessons } from "./lessons.modern.objects";
 import { modernSetLessons } from "./lessons.modern.set";
@@ -30,6 +31,7 @@ import { dsaChallenges2 } from "./challenges.dsa-2";
 
 export const allLessons: Lesson[] = [
   ...coreLessons,
+  ...arrayMethodLessons,
   ...modernArrayLessons,
   ...modernObjectLessons,
   ...modernSetLessons,

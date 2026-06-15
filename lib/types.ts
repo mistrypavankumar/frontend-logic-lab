@@ -34,6 +34,7 @@ export type LessonCategory =
   | "CSS"
   | "JavaScript"
   | "React"
+  | "Array Methods"
   | "Modern Array Methods"
   | "Modern Objects & Grouping"
   | "Modern Set Operations"
@@ -268,6 +269,24 @@ export interface LearningAids {
   reviewTags?: string[];
 }
 
+/**
+ * The "solve it with the built-in first" stage of a two-stage practice.
+ * The manual stage reuses the lesson's practiceStarter + practiceTests.
+ */
+export interface BuiltInPractice {
+  /** Starter for the built-in stage (same function name as the manual stage). */
+  starter: string;
+  /**
+   * Substrings the code MUST contain in the built-in stage (e.g. [".filter("])
+   * — and which are FORBIDDEN in the manual stage (so it's written by hand).
+   */
+  mustUse: string[];
+  /** Optional separate tests; defaults to the lesson's practiceTests. */
+  tests?: TestCase[];
+  /** Optional one-line framing shown above the editor. */
+  intro?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Lesson
 // ---------------------------------------------------------------------------
@@ -290,6 +309,12 @@ export interface Lesson extends LearningAids {
   practiceStarter?: string; // editable starter for the "Your code" editor
   practiceTests?: TestCase[]; // auto-graded practice
   practiceRunnable?: boolean; // force console-mode Run without tests
+  /**
+   * Two-stage practice: solve the SAME task first WITH the built-in method,
+   * then again BY HAND. When present, the lesson only counts as complete once
+   * BOTH stages pass. practiceStarter/practiceTests power the manual stage.
+   */
+  builtInPractice?: BuiltInPractice;
   hint: string;
   solution: CodeSnippet;
   explanation: string; // why the solution works
