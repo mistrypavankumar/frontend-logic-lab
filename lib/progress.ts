@@ -54,6 +54,8 @@ export interface ProgressState {
   srs: Record<string, SrsEntry>;
   /** The learner's own "why does this work?" notes, keyed by challenge id. */
   explanations: Record<string, string>;
+  /** Testing-track scenarios completed, keyed `<lessonSlug>:<scenarioId>`. */
+  testingDone: string[];
 }
 
 const RECENT_LIMIT = 8;
@@ -71,6 +73,7 @@ export function emptyProgress(): ProgressState {
     viewedSolutions: [],
     srs: {},
     explanations: {},
+    testingDone: [],
   };
 }
 
@@ -229,6 +232,7 @@ export function readProgress(): ProgressState {
       viewedSolutions: parsed.viewedSolutions ?? [],
       srs: parsed.srs ?? {},
       explanations: parsed.explanations ?? {},
+      testingDone: parsed.testingDone ?? [],
     };
   } catch {
     return emptyProgress();

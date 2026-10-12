@@ -26,15 +26,22 @@ test("basic example", ${spec.functionName}(/* … */) === /* … */);
   const [results, setResults] = useState<ImplResult[] | null>(null);
   const [reveal, setReveal] = useState<Record<number, boolean>>({});
 
-  const run = () => {
-    const r = runTestWriting(code, spec.correctImpl, spec.buggyImpls);
-    setResults(r);
-    setReveal({});
-    const correct = r[0];
-    const buggies = r.slice(1);
-    const solid =
-      correct.allPass && buggies.every((b) => !b.allPass && !b.fatalError);
-    if (solid) onSolved?.();
+  const [running, setRunning] = useState(false);
+
+  const run = async () => {
+    setRunning(true);
+    try {
+      const r = await runTestWriting(code, spec.correctImpl, spec.buggyImpls);
+      setResults(r);
+      setReveal({});
+      const correct = r[0];
+      const buggies = r.slice(1);
+      const solid =
+        correct.allPass && buggies.every((b) => !b.allPass && !b.fatalError);
+      if (solid) onSolved?.();
+    } finally {
+      setRunning(false);
+    }
   };
 
   const reset = () => {
@@ -64,9 +71,10 @@ test("basic example", ${spec.functionName}(/* … */) === /* … */);
       <div className="flex flex-wrap gap-2">
         <button
           onClick={run}
-          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+          disabled={running}
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
         >
-          ▶ Run my tests
+          {running ? "Running…" : "▶ Run my tests"}
         </button>
         <button
           onClick={reset}

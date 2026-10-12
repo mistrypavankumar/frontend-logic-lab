@@ -16,7 +16,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    // Dark by default. The inline script runs before first paint, so a saved
+    // "light" choice applies without a flash (see components/ThemeToggle.tsx).
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('fll-theme')==='light')document.documentElement.classList.remove('dark')}catch(e){}",
+          }}
+        />
+      </head>
       <body className="flex min-h-screen flex-col">
         <Eli5Provider>
           <Navbar />

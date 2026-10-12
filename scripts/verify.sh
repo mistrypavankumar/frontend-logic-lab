@@ -24,7 +24,7 @@ cat > tsconfig.verify.json <<'EOF'
     "baseUrl": ".", "outDir": "/tmp/fllverify", "jsx": "react",
     "declaration": false, "incremental": false, "composite": false
   },
-  "include": ["data/**/*.ts", "lib/types.ts"]
+  "include": ["data/**/*.ts", "lib/types.ts", "lib/testHarness.ts"]
 }
 EOF
 npx tsc -p tsconfig.verify.json || true   # type errors already caught above; we only need emit
@@ -32,3 +32,6 @@ rm -f tsconfig.verify.json
 
 echo "== running content tests =="
 node scripts/verify-content.cjs
+
+echo "== verifying the Testing track =="
+node scripts/verify-testing.cjs

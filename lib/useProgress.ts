@@ -92,6 +92,21 @@ export function useProgress() {
 
   const reset = useCallback(() => update(() => emptyProgress()), [update]);
 
+  // Mark a Testing-track scenario complete (`<lessonSlug>:<scenarioId>`).
+  const markTestingDone = useCallback(
+    (key: string) =>
+      update((p) =>
+        p.testingDone.includes(key)
+          ? p
+          : { ...p, testingDone: [...p.testingDone, key], streak: bumpStreak(p.streak, todayKey()) }
+      ),
+    [update]
+  );
+  const isTestingDone = useCallback(
+    (key: string) => state.testingDone.includes(key),
+    [state.testingDone]
+  );
+
   // Record Logic Score signals for a challenge (signals only flip on).
   const recordScore = useCallback(
     (id: string, patch: ChallengeScore) =>
@@ -179,6 +194,7 @@ export function useProgress() {
     markSolutionViewed,
     recordReview,
     saveExplanation,
+    markTestingDone,
     reset,
     // selectors
     isLessonDone,
@@ -189,5 +205,6 @@ export function useProgress() {
     isSolutionViewed,
     srsFor,
     explanationFor,
+    isTestingDone,
   };
 }

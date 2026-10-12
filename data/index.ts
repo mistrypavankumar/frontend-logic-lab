@@ -28,6 +28,7 @@ import { aiReviewChallenges } from "./challenges.ai-review";
 import { testWritingChallenges } from "./challenges.test-writing";
 import { dsaChallenges } from "./challenges.dsa";
 import { dsaChallenges2 } from "./challenges.dsa-2";
+import { dsaChallenges3 } from "./challenges.dsa-3";
 
 export const allLessons: Lesson[] = [
   ...coreLessons,
@@ -51,6 +52,7 @@ export const allChallenges: Challenge[] = [
   ...testWritingChallenges,
   ...dsaChallenges,
   ...dsaChallenges2,
+  ...dsaChallenges3,
 ];
 
 // --- ordered / filtered views ---

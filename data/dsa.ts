@@ -244,4 +244,84 @@ export const dsaTopics: DsaTopic[] = [
       "dsa-count-nodes",
     ],
   },
+  {
+    slug: "graphs",
+    name: "Graphs (BFS / DFS)",
+    icon: "🕸️",
+    idea: "Model things and their connections as nodes and edges, then explore: DFS goes deep along one path (connected regions), BFS expands in rings (shortest paths, dependency order).",
+    whenToUse:
+      "Grids of cells, 'connected groups', 'fewest steps from A to B', or anything with dependencies/prerequisites (build order, cycle detection).",
+    mentalModel: "DFS: follow one corridor to the end before backtracking. BFS: a ripple spreading out from a stone, one ring at a time.",
+    complexity: "O(V + E) — every node and edge once (O(rows × cols) for a grid).",
+    problemSlugs: [
+      "dsa-number-of-islands",
+      "dsa-flood-fill",
+      "dsa-shortest-path-grid",
+      "dsa-course-schedule",
+    ],
+  },
+  {
+    slug: "heaps",
+    name: "Heaps & Top-K",
+    icon: "⛰️",
+    idea: "A heap always gives you the smallest (or largest) item in O(log n), even as items keep arriving — so you can keep a running 'top k' without sorting everything.",
+    whenToUse:
+      "'Kth largest', 'top k most …', 'merge k sorted …', or a loop that repeatedly needs the current min/max.",
+    mentalModel: "A leaderboard that only keeps k spots: the weakest member sits on top, ready to be kicked out.",
+    complexity: "O(n log k) for top-k; O(log n) per push/pop.",
+    problemSlugs: [
+      "dsa-kth-largest",
+      "dsa-top-k-frequent",
+      "dsa-last-stone-weight",
+      "dsa-merge-k-sorted",
+    ],
+  },
+  {
+    slug: "tries",
+    name: "Tries (Prefix Trees)",
+    icon: "🔤",
+    idea: "Store words letter by letter in a tree so every path from the root is a prefix — prefix lookups then cost the length of the prefix, not the number of words.",
+    whenToUse:
+      "Autocomplete/typeahead, 'starts with' queries, prefix replacement, or many lookups against a fixed dictionary.",
+    mentalModel: "A phone book where each page only lists the next letter — flip one page per character you type.",
+    complexity: "O(L) per insert/lookup (L = word length).",
+    problemSlugs: [
+      "dsa-search-suggestions",
+      "dsa-implement-trie",
+      "dsa-replace-words",
+      "dsa-longest-word",
+    ],
+  },
+  {
+    slug: "tree-bfs",
+    name: "Trees: Level Order (BFS)",
+    icon: "🪜",
+    idea: "Visit a tree one level at a time with a queue — perfect whenever the answer depends on DEPTH (per-level values, nearest leaf, what's visible from a side).",
+    whenToUse:
+      "'Level by level', 'per row', 'minimum depth', 'right/left side view', 'zigzag' — anything about rows of a tree rather than root-to-leaf paths.",
+    mentalModel: "Read the tree like a page: row by row, left to right.",
+    complexity: "O(n) time, O(w) space (w = widest level).",
+    problemSlugs: [
+      "dsa-level-order",
+      "dsa-min-depth",
+      "dsa-right-side-view",
+      "dsa-zigzag-level-order",
+    ],
+  },
+  {
+    slug: "sorting",
+    name: "Sorting Algorithms",
+    icon: "📶",
+    idea: "Know how sorting actually works — merge sort (stable, always O(n log n)), quick sort (fast in place, partition-based) — and how to write a comparator that encodes your own rule.",
+    whenToUse:
+      "'Implement a sort', 'sort without .sort()', partitioning into groups in one pass, or ordering by a custom rule.",
+    mentalModel: "Merge sort: split the deck, sort the halves, zip them together. Quick sort: pick a pivot card and throw everything else to its left or right.",
+    complexity: "O(n log n) for comparison sorts; O(n) for special cases like 3-way partitioning.",
+    problemSlugs: [
+      "dsa-sort-colors",
+      "dsa-merge-sort",
+      "dsa-quick-sort",
+      "dsa-largest-number",
+    ],
+  },
 ];

@@ -526,3 +526,67 @@ export interface Project {
   features: string[];
   skills: string[];
 }
+
+// ---------------------------------------------------------------------------
+// Testing track — teaches frontend testing from "what is a test" to TDD,
+// mocks, DOM testing and mutation testing. Each lesson has an interactive lab
+// with several scenarios ("try it with a different example").
+// ---------------------------------------------------------------------------
+
+/**
+ * What the learner must do in a lab scenario:
+ *  - "pass":      write tests that pass against the code (≥ minTests, using mustUse).
+ *  - "catch":     write tests that pass on the real code AND fail on every buggy mutant.
+ *  - "implement": TDD — the tests are given; write the code until they pass.
+ */
+export type TestLabGoal = "pass" | "catch" | "implement";
+
+export interface TestLabScenario {
+  id: string;
+  title: string;
+  /** What the code under test does / what to try. */
+  description: string;
+  goal: TestLabGoal;
+  /** The code under test (for "implement": the reference solution). */
+  code: string;
+  /** "implement" only: the learner's starting code. */
+  starterCode?: string;
+  /** The learner's starting test file ("implement": the fixed tests to satisfy). */
+  starterTests: string;
+  /** A model test suite (shown on request for "pass"/"catch"). */
+  solutionTests?: string;
+  /** "catch" only: deliberately buggy versions a good suite must catch. */
+  mutants?: BuggyImpl[];
+  /** "pass" only: minimum number of tests. */
+  minTests?: number;
+  /** "pass" only: substrings the tests must use, e.g. ["toEqual("]. */
+  mustUse?: string[];
+  hint?: string;
+  /** DOM lessons: expression that returns the element to show in the Preview tab. */
+  preview?: string;
+}
+
+export interface TestingSection {
+  title: string;
+  /** Paragraphs; `inline code` in backticks is rendered as code. */
+  body: string[];
+  code?: CodeSnippet;
+  /** Optional result shown under the code (e.g. Jest output). */
+  output?: string;
+}
+
+export interface TestingLesson {
+  slug: string;
+  title: string;
+  level: "Beginner" | "Intermediate" | "Advanced";
+  icon: string;
+  summary: string;
+  minutes: number;
+  /** "dom" runs the lab in a real (sandboxed) DOM. */
+  env: "js" | "dom";
+  sections: TestingSection[];
+  keyPoints: string[];
+  visualization?: ConceptVisualization;
+  quiz?: PredictOutputQuestion[];
+  scenarios: TestLabScenario[];
+}

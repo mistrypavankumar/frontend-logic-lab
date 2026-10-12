@@ -36,7 +36,7 @@ const MAX_TRACE_STEPS = 300;
 
 // Stable stringify so { a:1, b:2 } and { b:2, a:1 } compare equal,
 // and so output is readable in the results panel.
-function show(value: unknown): string {
+export function show(value: unknown): string {
   const seen = new WeakSet();
   const sorter = (_key: string, val: unknown) => {
     if (val && typeof val === "object" && !Array.isArray(val)) {
@@ -55,6 +55,103 @@ function show(value: unknown): string {
     return JSON.stringify(value, sorter);
   } catch {
     return String(value);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Execution: every harness body runs in a throwaway Web Worker so a learner's
+// infinite loop can't freeze the page — if the worker doesn't answer within
+// RUN_BUDGET_MS we terminate it and report a friendly error. Where Workers are
+// unavailable (SSR, blocked blob: URLs) we fall back to running in-thread.
+// ---------------------------------------------------------------------------
+
+// Whole-run cap (all tests). Generous enough for the async challenges' tiny
+// real delays and a 2s per-test timeout, short enough to feel responsive.
+export const RUN_BUDGET_MS = 6000;
+
+export const INFINITE_LOOP_MESSAGE =
+  `Stopped after ${RUN_BUDGET_MS / 1000}s — your code is probably stuck in an infinite loop ` +
+  `(e.g. a while loop whose condition never becomes false, or a loop index that never moves).`;
+
+export type ExecResult = { ok: true; value: unknown } | { ok: false; error: string };
+
+// The worker gets its own copy of show() (serialized from the function above —
+// it only uses globals that exist in workers), then runs each body it's sent.
+const workerSource = () => `
+  const __show = (${show.toString()});
+  self.onmessage = async (e) => {
+    try {
+      const fn = new Function("__show", e.data);
+      const value = await fn(__show);
+      self.postMessage({ ok: true, value });
+    } catch (err) {
+      self.postMessage({ ok: false, error: String(err) });
+    }
+  };
+`;
+
+let workerUrl: string | null = null;
+function getWorkerUrl(): string | null {
+  if (typeof window === "undefined" || typeof Worker === "undefined") return null;
+  if (!workerUrl) {
+    try {
+      workerUrl = URL.createObjectURL(
+        new Blob([workerSource()], { type: "text/javascript" })
+      );
+    } catch {
+      return null;
+    }
+  }
+  return workerUrl;
+}
+
+async function runInThread(body: string): Promise<ExecResult> {
+  try {
+    const fn = new Function("__show", body) as (s: typeof show) => unknown;
+    return { ok: true, value: await fn(show) };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+/** Runs a harness body (which receives `__show`) and resolves with its return value. */
+export function execute(body: string): Promise<ExecResult> {
+  const url = getWorkerUrl();
+  if (!url) return runInThread(body);
+
+  let worker: Worker;
+  try {
+    worker = new Worker(url);
+  } catch {
+    return runInThread(body); // e.g. a CSP that forbids blob: workers
+  }
+
+  return new Promise<ExecResult>((resolve) => {
+    const finish = (r: ExecResult) => {
+      clearTimeout(timer);
+      worker.terminate();
+      resolve(r);
+    };
+    const timer = setTimeout(
+      () => finish({ ok: false, error: INFINITE_LOOP_MESSAGE }),
+      RUN_BUDGET_MS
+    );
+    worker.onmessage = (e: MessageEvent<ExecResult>) => finish(e.data);
+    worker.onerror = (e) => {
+      e.preventDefault();
+      finish({ ok: false, error: e.message || "Error while running your code" });
+    };
+    worker.postMessage(body);
+  });
+}
+
+/** Validates that a body compiles WITHOUT running it (cheap, can't hang). */
+export function compiles(body: string): string | null {
+  try {
+    new Function("__show", body);
+    return null;
+  } catch (e) {
+    return String(e);
   }
 }
 
@@ -133,9 +230,9 @@ function buildBody(learnerCode: string, tests: TestCase[]): string {
  * execution trace). If that copy fails to construct, we fall back to the
  * original source — so the trace feature can never affect running or grading.
  *
- * This is for LEARNING, not security — code runs on the same thread, so it
- * isn't isolated from a determined user; it just can't accidentally touch React
- * state or the DOM through these globals.
+ * The code runs in a Web Worker (see execute()), so an infinite loop is cut
+ * off after RUN_BUDGET_MS instead of freezing the tab. This is for LEARNING,
+ * not security — it just keeps learner code away from React state and the DOM.
  */
 export async function runChallenge(
   userCode: string,
@@ -143,34 +240,23 @@ export async function runChallenge(
 ): Promise<RunResult> {
   const logs: string[] = [];
 
-  // Prefer the instrumented build; validate it constructs, else use the original.
-  let fn: ((s: typeof show) => Promise<RawRun>) | null = null;
+  // Prefer the instrumented build; validate it compiles, else use the original.
+  let body: string | null = null;
   const instrumented = instrumentLoops(userCode);
   if (instrumented !== userCode) {
-    try {
-      fn = new Function("__show", buildBody(instrumented, tests)) as (
-        s: typeof show
-      ) => Promise<RawRun>;
-    } catch {
-      fn = null; // instrumentation produced invalid code — fall back below
-    }
+    const candidate = buildBody(instrumented, tests);
+    if (compiles(candidate) === null) body = candidate;
+    // else: instrumentation produced invalid code — fall back below
   }
-  if (!fn) {
-    try {
-      fn = new Function("__show", buildBody(userCode, tests)) as (
-        s: typeof show
-      ) => Promise<RawRun>;
-    } catch (e) {
-      return { logs, cases: [], trace: [], fatalError: String(e) };
-    }
+  if (!body) {
+    body = buildBody(userCode, tests);
+    const syntaxError = compiles(body);
+    if (syntaxError) return { logs, cases: [], trace: [], fatalError: syntaxError };
   }
 
-  let raw: RawRun;
-  try {
-    raw = await fn(show);
-  } catch (e) {
-    return { logs, cases: [], trace: [], fatalError: String(e) };
-  }
+  const exec = await execute(body);
+  if (!exec.ok) return { logs, cases: [], trace: [], fatalError: exec.error };
+  const raw = exec.value as RawRun;
 
   logs.push(...raw.logs);
 
@@ -225,10 +311,10 @@ export interface ImplResult {
 
 // Runs the learner's test code once with `implCode` defining the target
 // function, plus a `test(name, cond)` recorder and an `eq(a,b)` deep-compare.
-function runTestsAgainst(testCode: string, implCode: string): {
+async function runTestsAgainst(testCode: string, implCode: string): Promise<{
   assertions: TestAssertion[];
   fatalError?: string;
-} {
+}> {
   const body = `
     "use strict";
     const __r = [];
@@ -244,22 +330,21 @@ function runTestsAgainst(testCode: string, implCode: string): {
     }
     return __r;
   `;
-  try {
-    const fn = new Function("__show", body) as (s: typeof show) => TestAssertion[];
-    return { assertions: fn(show) };
-  } catch (e) {
-    return { assertions: [], fatalError: String(e) };
-  }
+  const syntaxError = compiles(body);
+  if (syntaxError) return { assertions: [], fatalError: syntaxError };
+  const exec = await execute(body);
+  if (!exec.ok) return { assertions: [], fatalError: exec.error };
+  return { assertions: exec.value as TestAssertion[] };
 }
 
-export function runTestWriting(
+export async function runTestWriting(
   testCode: string,
   correctImpl: string,
   buggyImpls: BuggyImpl[]
-): ImplResult[] {
+): Promise<ImplResult[]> {
   const out: ImplResult[] = [];
 
-  const correct = runTestsAgainst(testCode, correctImpl);
+  const correct = await runTestsAgainst(testCode, correctImpl);
   out.push({
     label: "Correct solution",
     isCorrect: true,
@@ -272,7 +357,7 @@ export function runTestWriting(
   });
 
   for (const buggy of buggyImpls) {
-    const r = runTestsAgainst(testCode, buggy.code);
+    const r = await runTestsAgainst(testCode, buggy.code);
     out.push({
       label: buggy.label,
       isCorrect: false,

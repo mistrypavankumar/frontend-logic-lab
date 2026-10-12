@@ -9,9 +9,21 @@ import { formatCode } from "@/lib/format";
 export default function CodeEditor({
   value,
   onChange,
+  fill = false,
+  flush = false,
+  toolbar,
+  readOnly = false,
 }: {
   value: string;
   onChange: (next: string) => void;
+  /** Stretch to the parent's height (IDE pane) instead of sizing by line count. */
+  fill?: boolean;
+  /** Edge-to-edge inside a panel: no rounded border of its own. */
+  flush?: boolean;
+  /** Extra controls shown at the right of the header (e.g. Run / Submit). */
+  toolbar?: React.ReactNode;
+  /** View-only (e.g. the code under test). */
+  readOnly?: boolean;
 }) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
@@ -35,6 +47,7 @@ export default function CodeEditor({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (readOnly) return;
     const ta = e.currentTarget;
     const start = ta.selectionStart;
     const end = ta.selectionEnd;
@@ -101,21 +114,32 @@ export default function CodeEditor({
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-700 bg-slate-900 font-mono text-sm">
-      <div className="flex items-center justify-between border-b border-slate-700 px-3 py-1.5">
+    <div
+      className={
+        "overflow-hidden bg-slate-900 font-mono text-sm" +
+        (flush ? "" : " rounded-lg border border-slate-700") +
+        (fill ? " flex h-full flex-col" : "")
+      }
+    >
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-700 px-3 py-1.5">
         <span className="text-xs uppercase tracking-wide text-slate-500">JS</span>
-        <button
-          type="button"
-          onClick={format}
-          disabled={formatting}
-          title="Format with Prettier"
-          className="rounded px-2 py-0.5 text-xs font-medium text-slate-300 hover:bg-slate-700 disabled:opacity-50"
-        >
-          {formatting ? "Formatting…" : "✨ Format"}
-        </button>
+        <div className="flex items-center gap-1.5">
+          {!readOnly && (
+          <button
+            type="button"
+            onClick={format}
+            disabled={formatting}
+            title="Format with Prettier"
+            className="rounded px-2 py-0.5 text-xs font-medium text-slate-300 hover:bg-slate-700 disabled:opacity-50"
+          >
+            {formatting ? "Formatting…" : "✨ Format"}
+          </button>
+          )}
+          {toolbar}
+        </div>
       </div>
 
-      <div className="flex">
+      <div className={fill ? "flex min-h-0 flex-1" : "flex"}>
         <div
           ref={gutterRef}
           aria-hidden
@@ -132,11 +156,15 @@ export default function CodeEditor({
           spellCheck={false}
           wrap="off"
           aria-label="Code editor"
+          readOnly={readOnly}
           onChange={(e) => onChange(e.target.value)}
           onScroll={syncScroll}
           onKeyDown={handleKeyDown}
-          rows={Math.min(Math.max(lineCount, 6), 20)}
-          className="w-full resize-none overflow-x-auto whitespace-pre bg-transparent py-3 pr-3 text-slate-100 caret-brand-500 outline-none"
+          rows={fill ? undefined : Math.min(Math.max(lineCount, 6), 20)}
+          className={
+            "w-full resize-none overflow-x-auto whitespace-pre bg-transparent py-3 pr-3 text-slate-100 caret-brand-500 outline-none" +
+            (fill ? " h-full min-h-[16rem] lg:min-h-0" : "")
+          }
           style={{ lineHeight: "1.6rem" }}
         />
       </div>

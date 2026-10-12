@@ -57,40 +57,55 @@ export default function TwoStagePractice({
     },
   ];
 
+  const [active, setActive] = useState<"builtin" | "manual">("builtin");
+  // Jump to the manual stage the moment the built-in one passes.
+  useEffect(() => {
+    if (builtInPassed) setActive("manual");
+  }, [builtInPassed]);
+  const current = stages.find((s) => s.key === active) ?? stages[0];
+
+  // Stage tabs above one LeetCode-style workspace. Both workspaces stay mounted
+  // (only the active one is shown) so switching tabs keeps each stage's results.
   return (
-    <div className="space-y-5">
-      {/* Progress strip */}
-      <div className="flex items-center gap-3 text-sm">
-        {stages.map((s, i) => (
-          <div key={s.key} className="flex items-center gap-3">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex h-10 shrink-0 items-center gap-1 border-b border-slate-200 bg-slate-50 px-2">
+        {stages.map((st) => (
+          <button
+            key={st.key}
+            onClick={() => st.unlocked && setActive(st.key as "builtin" | "manual")}
+            disabled={!st.unlocked}
+            title={st.unlocked ? undefined : "Pass the built-in step first"}
+            className={
+              "flex items-center gap-2 rounded-md px-3 py-1 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 " +
+              (st.key === active
+                ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200"
+                : "text-slate-500 hover:bg-slate-200/60")
+            }
+          >
             <span
               className={
-                "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold " +
-                (s.done
-                  ? "bg-green-600 text-white"
-                  : "bg-slate-200 text-slate-600")
+                "flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold " +
+                (st.done ? "bg-green-600 text-white" : "bg-slate-200 text-slate-600")
               }
             >
-              {s.done ? "✓" : s.n}
+              {st.done ? "✓" : st.unlocked ? st.n : "🔒"}
             </span>
-            <span className={s.done ? "font-medium text-green-700" : "text-slate-600"}>
-              {s.key === "builtin" ? "Built-in" : "Manual"}
-            </span>
-            {i === 0 && <span className="text-slate-300">→</span>}
-          </div>
+            {st.key === "builtin" ? "Built-in" : "By hand"}
+          </button>
         ))}
         {builtInPassed && manualPassed && (
-          <span className="ml-auto rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
+          <span className="ml-auto rounded-full bg-green-100 px-3 py-0.5 text-xs font-semibold text-green-700">
             🎉 Both done — lesson complete!
           </span>
         )}
       </div>
+      <p className="shrink-0 border-b border-slate-200 px-3 py-2 text-xs text-slate-600">
+        <span className="font-semibold text-slate-800">Step {current.n}: {current.title}.</span>{" "}
+        {current.sub}
+        {active === "builtin" && builtInIntro ? ` ${builtInIntro}` : ""}
+      </p>
 
-      {/* Stage 1 — built-in */}
-      <StageCard stage={stages[0]}>
-        {builtInIntro && (
-          <p className="mb-2 text-sm text-slate-500">{builtInIntro}</p>
-        )}
+      <div className={active === "builtin" ? "flex min-h-0 flex-1 flex-col" : "hidden"}>
         <ChallengeWorkspace
           key={`${lessonId}:builtin`}
           persistKey={`lesson:${lessonId}:builtin`}
@@ -99,11 +114,9 @@ export default function TwoStagePractice({
           requireUse={mustUse}
           onResult={setBuiltInPassed}
         />
-      </StageCard>
-
-      {/* Stage 2 — manual (revealed after stage 1) */}
-      <StageCard stage={stages[1]}>
-        {stages[1].unlocked ? (
+      </div>
+      {stages[1].unlocked && (
+        <div className={active === "manual" ? "flex min-h-0 flex-1 flex-col" : "hidden"}>
           <ChallengeWorkspace
             key={`${lessonId}:manual`}
             persistKey={`lesson:${lessonId}:manual`}
@@ -112,47 +125,8 @@ export default function TwoStagePractice({
             forbidUse={mustUse}
             onResult={setManualPassed}
           />
-        ) : (
-          <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-            🔒 Pass the built-in step first — then write it by hand here.
-          </p>
-        )}
-      </StageCard>
-    </div>
-  );
-}
-
-function StageCard({
-  stage,
-  children,
-}: {
-  stage: { n: number; title: string; sub: string; done: boolean };
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={
-        "rounded-xl border p-4 " +
-        (stage.done ? "border-green-200 bg-green-50/40" : "border-slate-200 bg-white")
-      }
-    >
-      <div className="mb-3 flex items-start gap-3">
-        <span
-          className={
-            "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold " +
-            (stage.done ? "bg-green-600 text-white" : "bg-brand-600 text-white")
-          }
-        >
-          {stage.done ? "✓" : stage.n}
-        </span>
-        <div>
-          <h3 className="font-semibold text-slate-900">
-            Step {stage.n}: {stage.title}
-          </h3>
-          <p className="text-sm text-slate-500">{stage.sub}</p>
         </div>
-      </div>
-      {children}
+      )}
     </div>
   );
 }
